@@ -1,10 +1,20 @@
 *{box-sizing: border-box;}
-body{padding:0px;margin:0px;font-family: Arial, Helvetica, sans-serif;}
+body{padding:0px;margin:0px;font-family: Arial, Helvetica, sans-serif;background: url('../images/grey.png');}
 ul, li{list-style-type:none;padding:0px;margin:0px;}
-.header{position:fixed;top:0px;width:100%;height: 38px;cursor: pointer;}
-.header > div{float:left;padding:5px;width: 100%;}
-.header > div > div{width: 12.5%;text-align: center;}
-.header div{float:left;padding:5px;}
-.header div ul{display: none;background: #676767;/* box-shadow: 0px 0px 2px; */}
-.header div:hover > ul{display: block;position: relative;top: 10px;}
-.header span, .header li {padding: 5px;text-align: center;border-bottom: 1px solid black;width: 100%;/* display: inline-block; */}
+#splash{top:0px;left:0px;width:100%;height:100%;position:fixed;background:white;z-index:100000000000;display:none;}
+.elements_panel{width:60px;float:left;font-size: 11px;position:absolute;z-index: 100000;background:white;}
+.elements_panel ul > li{height:60px;padding-top: 8px;box-shadow: 0px 0px 0px 1px;margin: 1px;cursor:pointer;}
+.elements_panel ul > li i{font-size: 30px;width: 60px;text-align: center;}
+.elements_panel ul > li span{text-align:center;display: block;margin-top: 3px;}
+.elements_panel > ul > li > ul{position:relative;background:white;top: -54px;left:0px;transition-duration:500ms;display:none;}
+.elements_panel > ul > li.active > ul{left:58px;display:block;}
+#canvas_container{position:fixed;width:100%;height:100%;top:0px;left:0px;}
+#canvas_container > div{box-shadow:0px 0px 5px;}
+.canvas-container{left:10%;top:5%;float:left;}
+.small-font{font-size:10px;margin-top: -6px !important;}
+@-webkit-keyframes dancing-dots-jump {0% { top: 0; }55% { top: 0; }60% { top: -10px; }80% { top: 3px; }90% { top: -2px; }95% { top: 1px; }100% { top: 0; }}
+.jumping-dots{padding: 0px;top: calc(50% - 10px);left: calc(50% - 10px);position: absolute;}
+text{vertical-align: text-bottom;font-size: 20px;}
+.jumping-dots > span {-webkit-animation: dancing-dots-jump 1800ms infinite;position: relative;width: 5px;height: 5px;background: #000;display: inline-block;border-radius: 2px;margin: 2px;padding: 0px;}
+.jumping-dots > span:nth-child(2) {-webkit-animation-delay: 100ms;}
+.jumping-dots > span:nth-child(3) {-webkit-animation-delay: 300ms;}
