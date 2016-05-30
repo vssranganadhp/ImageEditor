@@ -228,7 +228,6 @@ function addArrow(){
 	str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
 	str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}','black').replace('{SW}','5');
 	str += SVG_END;
-	console.log(str);
 	fabric.loadSVGFromString(str,function(objects, options){
 		var loadedObject = fabric.util.groupSVGElements(objects, options);
 		makeCenterAndRedraw(loadedObject);
@@ -243,7 +242,6 @@ function addDoubleArrow(){
 	str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
 	str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}','black').replace('{SW}','5');
 	str += SVG_END;
-	console.log(str);
 	fabric.loadSVGFromString(str,function(objects, options){
 		var loadedObject = fabric.util.groupSVGElements(objects, options);
 		makeCenterAndRedraw(loadedObject);
@@ -300,6 +298,25 @@ function addDiamond(){
       angle : 45
     })
     makeCenterAndRedraw(diamObj);
+}
+
+function addPolygon(){
+	var polyObj = new fabric.Polygon([{x: 75, y: 0},{x: 150, y: 60},{x: 120, y: 135},{x: 30, y: 135},{x: 0, y: 60}], {
+		fill: 'white',
+		strokeWidth : 2,
+		stroke : 'black'
+	})
+    makeCenterAndRedraw(polyObj);
+}
+
+function addStar(){
+	var str = SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','238').replace('{H}','226');
+	str += '<polygon points="119,0 148,86 238,86 166,140 192,226 119,175 46,226 72,140 0,86 90,86" fill="transparent" stroke="black" stroke-width="2" />';
+	str += SVG_END;
+	fabric.loadSVGFromString(str,function(objects, options){
+		var starObj = fabric.util.groupSVGElements(objects, options);
+		makeCenterAndRedraw(starObj);
+	})
 }
 
 function makeCenterAndRedraw(elem){
