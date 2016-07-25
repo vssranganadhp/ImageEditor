@@ -20,3 +20,12 @@ text{vertical-align: text-bottom;font-size: 20px;}
 .jumping-dots > span:nth-child(3) {-webkit-animation-delay: 300ms;}
 i .canvas-container{left:calc(50% - 17px);float:left;cursor:pointer;}
 i .upper-canvas {cursor:pointer !important;}
+#properties_dialogs{background: #fff;width: 220px;z-index: 10000000;position: fixed;/*top: 20px;right: 0px;*/box-shadow: 0px 0px 3px 0px #000;height: 600px;transform:translate3d(0px,1000px,0);}
+#properties_dialogs > div > div > div {padding:8px;background: #efefef;margin: 5px;}
+#properties_dialogs div.prop_body span {/*width: 200px;*/display: inline-block;font-size:15px;float: left;}
+#properties_dialogs div.prop_body input, #properties_dialogs div.prop_body select {margin-top:5px;font-size:14px;width: 100%;}
+#properties_dialogs div.prop_body input[type="checkbox"]{width:auto;margin-left: 10px;margin-top: 0px;vertical-align: text-bottom;}
+#prop_head{text-align: center;width:220px;position: fixed;z-index: 10000000;background: #fff;height:78px;box-shadow: 0px 0px 2px #000;}
+#prop_head > span{font-size: 20px;background: #7d7d7d;color: #fff;padding:5px;cursor: move;-webkit-user-select: none;width: 220px;display: inline-block;position: absolute;left: 0px;}
+#prop_head > input{font-size: 16px;-webkit-appearance: textfield;width: 200px;position: absolute;left: 0px;top: 44px;left: 11px;}
+.prop_body{position:absolute;top:78px;width:100%;overflow-y: scroll;height: 512px;}
