@@ -118,6 +118,12 @@ $(document).ready(function(){
 			case 'Star':
 				addStar();
 				break;
+			case 'Crop':
+				$("#canvas_container").hide();
+				$("#image_ops").show();
+				$('#image_el').attr("src",canvas.toDataURL());
+				$('#image_el').Jcrop();
+				break;
 			default:
 				console.log(type);
 		}
@@ -141,8 +147,11 @@ $(document).ready(function(){
 	addSidebarIcons(function(){
 		hideSplash();
 		$(".prop_body input").bind("input",function(){
-			var val = parseFloat($(this).val());
+			var val = $(this).val();
 			var el_prop = $(this).attr('title');
+			if($(this).attr("type") == "number"){
+				val = parseFloat(val);
+			}
 			if(el_prop in selectedObj)
 				selectedObj[el_prop] = val;
 			selectedObj.setCoords();
@@ -316,7 +325,7 @@ function createPropertyDialogs(callback){
 					if(typeof(val) == 'object' && val.length > 0){
 						var subParentEl = $('<div />',{'class':'searchable','title':j});
 						subParentEl.append($('<span />').text(j));
-						var selectEl = $('<select />');
+						var selectEl = $('<select />',{'title':j});
 						for(var el in val){
 							selectEl.append($('<option />',{'value':val[el]}).text(val[el]));
 						}

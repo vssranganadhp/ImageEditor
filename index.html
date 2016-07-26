@@ -3,9 +3,11 @@
 	<head>
 		<title>Image Editor</title>
 		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<link rel="stylesheet" type="text/css" href="css/jquery.Jcrop.min.css" />
 		<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css" />
 		<script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
 		<script type="text/javascript" src="js/jquery.canvasAreaDraw.min.js"></script>
+		<script type="text/javascript" src="js/jquery.Jcrop.min.js"></script>
 		<script type="text/javascript" src="js/fabric.js"></script>
 		<script type="text/javascript" src="js/editor.js"></script>
 	</head>
@@ -36,6 +38,9 @@
 			</div>
 			<div id="canvas_container">
 				<canvas id="canvas"></canvas>
+			</div>
+			<div id="image_ops">
+				<img src="" id="image_el" />
 			</div>
 		</div>
 		<div hidden>
