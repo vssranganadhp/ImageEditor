@@ -8,6 +8,9 @@ var CIRCLE = '<circle fill="{FILL}" stroke="{S}" stroke-width="{SW}" cx="{X}" cy
 var LINE = '<line x1="{X1}" y1="{Y1}" x2="{X2}" y2="{Y2}" marker-end="url(#triangle)" stroke="{S}" stroke-width="{SW}"></line>';
 var MARKER = '<marker xmlns="http://www.w3.org/2000/svg" id="triangle" refX="0" refY="5" markerUnits="strokeWidth" markerHeight="2" markerWidth="2"><path d="M 40 5 L 50 10 L 40 15 z"/></marker>';
 var REVMARKER = '<marker xmlns="http://www.w3.org/2000/svg" id="triangle" refX="0" refY="5" markerUnits="strokeWidth" markerHeight="2" markerWidth="2"><path d="M 0 10 L 10 5 L 10 15 z"/><path d="M 40 5 L 50 10 L 40 15 z"/></marker>';
+var fonts = ["Aclonica", "Acme", "Akronim", "Aladin", "Alegreya", "Allerta", "Allura", "Amita", "Arbutus", "Architects Daughter", "Archivo Black", "Atomic Age", "Aubrey", "Bangers", "Basic", "Baumans", "Belleza", "BenchNine", "Berkshire Swash", "Bigshot One", "Bilbo", "Butcherman", "Caesar Dressing", "Cambo", "Candal", "Capriola", "Carrois Gothic", "Carter One", "Caveat Brush", "Cherry Cream Soda", "Codystar", "Convergence", "Covered By Your Grace", "Croissant One", "Crushed", "Days One", "Devonshire", "Dhurjati", "Diplomata", "Droid Sans Mono", "Duru Sans", "Engagement", "Englebert", "Ewert", "Faster One", "Griffy", "Helvetica","Iceberg", "Jacques Francois", "Lato", "Londrina Outline", "Marko One", "Marvel", "Monoton", "Mrs Sheppards", "Mystery Quest", "Nosifer", "Nova Cut", "Open Sans", "Oregano", "Oswald", "Oxygen Mono", "Press Start 2P", "Quicksand", "Ribeye", "Roboto", "Rosario", "Russo One", "Shojumaru", "Source Code Pro", "Swanky and Moo Moo", "The Girl Next Door", "Ubuntu", "UnifrakturMaguntia", "Voces", "Zeyada"];
+var coords = {};
+var croppedImage = null;
 var properties = {
 	'default':{
 		'angle' : 'number',
@@ -32,7 +35,7 @@ var properties = {
 		'width' : 'number'
 	},
 	'i-text' : {
-		'fontFamily' : ["Aclonica", "Acme", "Akronim", "Aladin", "Alegreya", "Allerta", "Allura", "Amita", "Arbutus", "Architects+Daughter", "Archivo+Black", "Atomic+Age", "Aubrey", "Bangers", "Basic", "Baumans", "Belleza", "BenchNine", "Berkshire+Swash", "Bigshot+One", "Bilbo", "Butcherman", "Caesar+Dressing", "Cambo", "Candal", "Capriola", "Carrois+Gothic", "Carter+One", "Caveat+Brush", "Cherry+Cream+Soda", "Codystar", "Convergence", "Covered+By+Your+Grace", "Croissant+One", "Crushed", "Days+One", "Devonshire", "Dhurjati", "Diplomata", "Droid+Sans+Mono", "Duru+Sans", "Engagement", "Englebert", "Ewert", "Faster+One", "Griffy", "Helvetica","Iceberg", "Jacques+Francois", "Lato", "Londrina+Outline", "Marko+One", "Marvel", "Monoton", "Mrs+Sheppards", "Mystery+Quest", "Nosifer", "Nova+Cut", "Open+Sans", "Oregano", "Oswald", "Oxygen+Mono", "Press+Start+2P", "Quicksand", "Ribeye", "Roboto", "Rosario", "Russo+One", "Shojumaru", "Source+Code+Pro", "Swanky+and+Moo+Moo", "The+Girl+Next+Door", "Ubuntu", "UnifrakturMaguntia", "Voces", "Zeyada"],
+		'fontFamily' : fonts,
 		'fontSize' : 'number',
 		'fontStyle' : ['normal', 'italic', 'oblique'],
 		'fontWeight' : ['normal', 'bold', '400', '600', '800'],
@@ -46,7 +49,6 @@ var properties = {
 		'alignX' : ['none', 'mid', 'min', 'max'],
 		'alignY' : ['none', 'mid', 'min', 'max'],
 		'crossOrigin' : ['', 'anonymous', 'use-credentials'],
-		'fill' : 'color',
 		'meetOrSlice' : ['meet', 'slice'],
 		'src' : 'string'
 	}
@@ -60,9 +62,12 @@ $(document).ready(function(){
 	canvas.on("object:selected",function(event){
 		selectedObj = canvas.getActiveObject();
 		if(selectedObj){
+			$(".prop_body").show();
 			selectedObj.bringToFront();
 			showProperties();
 			setProperties();
+		} else {
+			$(".prop_body").hide();
 		}
 	});
 	canvas.on("object:scaling",function(obj){
@@ -119,13 +124,36 @@ $(document).ready(function(){
 				addStar();
 				break;
 			case 'Crop':
+				canvas.discardActiveObject()
+				croppedImage = canvas.toDataURL();
+				$(this).addClass("active");
 				$("#canvas_container").hide();
-				$("#image_ops").show();
-				$('#image_el').attr("src",canvas.toDataURL());
-				$('#image_el').Jcrop();
+				$("#crop_image_ops").show();
+				$('#image_el').attr("src",croppedImage);
+				$('#image_el').Jcrop({
+					onSelect : updateCoords
+				});
+				startInterval();
+				break;
+			case 'Measure':
+				canvas.discardActiveObject()
+				croppedImage = canvas.toDataURL();
+				$(this).addClass("active");
+				$("#canvas_container").hide();
+				$("#measure_image_ops").show();
+				// croppedImage = 'http://farm8.staticflickr.com/7259/6956772778_2fa755a228.jpg';
+				$('#measure_image').attr("data-image-url",croppedImage);
+				$("#measure_image").addClass("canvas-area");
+				$('.canvas-area[data-image-url]').canvasAreaDraw();
 				break;
 			default:
 				console.log(type);
+		}
+		if(type != 'Crop'){
+			$("[data-type='Crop']").removeClass("active");
+		}
+		if(type != 'Measure'){
+			$("[data-type='Measure']").removeClass("active");
 		}
 		eventHandler(e);
 	});
@@ -172,6 +200,10 @@ $(document).ready(function(){
 				selectedObj[el_prop] = val;
 			selectedObj.setCoords();
 			canvas.renderAll();
+			setTimeout(function(){
+				if(canvas)
+					canvas.renderAll();
+			},1000);
 		})
 	});
 
@@ -220,6 +252,7 @@ $(document).ready(function(){
 		// })
 	})
 	$("#properties_dialogs").css("transform","translate3d("+(innerWidth-240)+"px,20px,0)");
+	loadFonts();
 });
 
 function addSidebarIcons(callback){
@@ -554,6 +587,65 @@ function deleteSelectedObj(){
     }
 }
 
+function startInterval(){
+	var target_el = $(".jcrop-holder > div:eq(0) > div:eq(0)");
+	var tick_icon = $('<span />',{'class':'crop_icon tick'});
+	var close_icon = $('<span />',{'class':'crop_icon close'});
+	tick_icon.insertAfter(target_el);
+	close_icon.insertAfter(target_el);
+	tick_icon.bind("click",function(){
+		console.log(coords);
+		var can = document.createElement('canvas');
+		var img = new Image();
+		img.onload = function(){
+			can.width = img.naturalWidth;
+			can.height = img.naturalHeight;
+			var cxt = can.getContext('2d');
+			cxt.drawImage(img,0,0);
+			var data = cxt.getImageData(coords.x,coords.y,coords.w,coords.h);
+			var temp_can = document.createElement('canvas');
+			temp_can.width = coords.w;
+			temp_can.height = coords.h;
+			var temp_cxt = temp_can.getContext('2d');
+			temp_cxt.putImageData(data,0,0);
+			var croppedSrc = temp_can.toDataURL();
+			$("#canvas_container").show();
+			$("#crop_image_ops").hide();
+			// canvas.clear();
+			fabric.Image.fromURL(croppedSrc,function(nimg){
+                canvas.add(nimg);
+                canvas.centerObject(nimg);
+			    nimg.setCoords();
+			    canvas.setActiveObject(nimg);
+                canvas.renderAll();
+                $("[data-type='Crop']").removeClass("active");
+            })
+		}
+		img.src = croppedImage;
+	})
+}
+
+function updateCoords(e){
+	coords = {
+		x : e.x,
+		y : e.y,
+		w : e.w,
+		h : e.h
+	}
+}
+
+function loadFonts(callback){
+    var str = '';
+    fonts.forEach(function(font){
+    	font = font.replace(/ /g,'+');
+        str += font+":400,700|";
+    });
+    str = str.slice(0,-1);
+    $("<link href='https://fonts.googleapis.com/css?family="+str+"' rel='stylesheet' type='text/css' />").appendTo($('head'));
+    if(typeof callback == 'function'){
+        callback();
+    }
+}
 
 function eventHandler(e){
 	e.preventDefault();
