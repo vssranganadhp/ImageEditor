@@ -86,12 +86,14 @@ $(document).ready(function(){
 	})
 	$(".elements_panel li[data-type]").bind("click",function(e){
 		var type = $(this).attr("data-type");
+		var removeClass = false;
 		switch(type){
 			case 'Text':
 				addText();
 				break;
 			case 'Shape':
 				toggleShapes(this);
+				removeClass = true;
 				break;
 			case 'Image':
 				dropImage();
@@ -134,6 +136,7 @@ $(document).ready(function(){
 					onSelect : updateCoords
 				});
 				startInterval();
+				removeClass = true;
 				break;
 			case 'Measure':
 				canvas.discardActiveObject()
@@ -145,16 +148,19 @@ $(document).ready(function(){
 				$('#measure_image').attr("data-image-url",croppedImage);
 				$("#measure_image").addClass("canvas-area");
 				$('.canvas-area[data-image-url]').canvasAreaDraw();
+				removeClass = true;
 				break;
 			default:
 				console.log(type);
 		}
-		if(type != 'Crop'){
-			$("[data-type='Crop']").removeClass("active");
+		if(!removeClass){
+			$(".elements_panel ul li.active").removeClass("active")
 		}
-		if(type != 'Measure'){
-			$("[data-type='Measure']").removeClass("active");
-		}
+		// if(type != 'Crop'){
+		// 	$("[data-type='Crop']").removeClass("active");
+		// } else if(type != 'Measure'){
+		// 	$("[data-type='Measure']").removeClass("active");
+		// }
 		eventHandler(e);
 	});
 	$("#image_file").bind("change",function(e){
@@ -214,17 +220,19 @@ $(document).ready(function(){
 		e.preventDefault();
 	})
 
-	$("#canvas_container").bind("keydown",function(e){
+	$("body").bind("keydown",function(e){
 		var keyCode = e.keyCode;
 		var preventDefault = false;
-        switch(keyCode){
-        	case 8:
-        		deleteSelectedObj();
-        		preventDefault = true;
-        		break;
+		if(selectedObj){
+	        switch(keyCode){
+	        	case 8:
+	        		deleteSelectedObj();
+	        		preventDefault = true;
+	        		break;
+			}
+			if(preventDefault)
+				eventHandler(e);
 		}
-		if(preventDefault)
-			eventHandler(e);
 	});
 	$("#search_el").bind("input",function(){
 		var q = $(this).val();
@@ -250,6 +258,14 @@ $(document).ready(function(){
 		// $("body").bind("mouseout",function(e){
 		// 	$("*").unbind("mousemove mouseup mouseout");
 		// })
+	})
+	$("#coords_div i").bind("click",function(){
+		$("#coords_div").hide();
+		$("#measure_image_ops").hide();
+		$("#canvas_container").show();
+		$("#measure_image_ops > *").not("textarea").remove();
+		$("#measure_image_ops textarea").removeAttr("data-image-url");
+		$(".elements_panel ul li.active").removeClass("active");
 	})
 	$("#properties_dialogs").css("transform","translate3d("+(innerWidth-240)+"px,20px,0)");
 	loadFonts();

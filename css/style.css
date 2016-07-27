@@ -35,3 +35,10 @@ span.crop_icon{width:30px;height:30px;background-size:30px;display: inline-block
 .tick{background: url('../images/select.png') white;right:3px;}
 .close{background: url('../images/close.png') white;right:36px;}
 #measure_image{display:none;position: fixed;top: calc(50% - 50px);font-size: 20px;width: 500px;left: calc(50% - 250px);text-align: center;box-shadow: 0px 0px 10px #808080;padding: 0px;height: 100px;}
+#coords_div{position: fixed;top:0px;left:0px;width:100%;height:100%;z-index:100000000;background:rgba(0,0,0,0.25);display:none;}
+#coords_div div{top:calc(50% - 100px);height:200px;left:calc(50% - 200px);width:400px;position: absolute;box-shadow:0px 0px 5px #c7c7c7;background: #fff;}
+#coords_div textarea{width: 100%;height:100%;resize: none;min-height: 150px;padding: 0px;margin: 0px;border: none;box-shadow: 0px 0px 0px 1px #c7c7c7;font-size:15px;}
+#coords_div textarea:focus{outline:none;}
+#coords_div > div > i{background: url('../images/close_red.png') #fff;width: 30px;height: 30px;background-size: 30px;display: inline-block;position: absolute;top: -15px;right: -15px;border-radius: 50%;cursor:pointer;}
+#coords_div button{float: right;font-weight: bold;-webkit-appearance: none;border:none;background:#9fb2ff;font-size: 16px;color: #000;padding: 6px;margin-right: 10px;margin-top: 2px;border-radius: 2px;cursor:pointer;box-shadow: 0px 2px 1px #000;}
+#coords_div button:hover{box-shadow:none;}
