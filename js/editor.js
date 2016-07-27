@@ -189,30 +189,36 @@ $(document).ready(function(){
 			if($(this).attr("type") == "number"){
 				val = parseFloat(val);
 			}
-			if(el_prop in selectedObj)
-				selectedObj[el_prop] = val;
-			selectedObj.setCoords();
-			canvas.renderAll();
+			if(selectedObj){
+				if(el_prop in selectedObj)
+					selectedObj[el_prop] = val;
+				selectedObj.setCoords();
+				canvas.renderAll();
+			}
 		})
 		$(".prop_body input[type='checkbox']").bind("change",function(){
 			var val = $(this).is(":checked");
 			var el_prop = $(this).attr('title');
-			if(el_prop in selectedObj)
-				selectedObj[el_prop] = val;
-			selectedObj.setCoords();
-			canvas.renderAll();
+			if(selectedObj){
+				if(el_prop in selectedObj)
+					selectedObj[el_prop] = val;
+				selectedObj.setCoords();
+				canvas.renderAll();
+			}
 		})
 		$(".prop_body select").bind("change",function(){
 			var val = $(this).val();
 			var el_prop = $(this).attr('title');
-			if(el_prop in selectedObj)
-				selectedObj[el_prop] = val;
-			selectedObj.setCoords();
-			canvas.renderAll();
-			setTimeout(function(){
-				if(canvas)
-					canvas.renderAll();
-			},1000);
+			if(selectedObj){
+				if(el_prop in selectedObj)
+					selectedObj[el_prop] = val;
+				selectedObj.setCoords();
+				canvas.renderAll();
+				setTimeout(function(){
+					if(canvas)
+						canvas.renderAll();
+				},1000);
+			}
 		})
 	});
 
