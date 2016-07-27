@@ -79,6 +79,9 @@ $(document).ready(function(){
 			canvas.renderAll();
 		}
 	});
+	canvas.on("selection:cleared",function(e){
+		selectedObj = null;
+	})
 	canvas.on("object:modified",function(){
 		if(selectedObj){
 			setProperties();
@@ -215,15 +218,16 @@ $(document).ready(function(){
 
 	$("#canvas_container").bind("contextmenu",function(e){
 		// console.log(e.pageX,e.pageY);
-		var x = canvas.findTarget(e);
-		canvas.setActiveObject(x);
+		var focussedEl = canvas.findTarget(e);
+		if(focussedEl)
+			canvas.setActiveObject(focussedEl);
 		e.preventDefault();
 	})
 
 	$("body").bind("keydown",function(e){
 		var keyCode = e.keyCode;
 		var preventDefault = false;
-		if(selectedObj){
+		if(selectedObj && e.target.nodeName == 'BODY'){
 	        switch(keyCode){
 	        	case 8:
 	        		deleteSelectedObj();
@@ -586,6 +590,7 @@ function setProperties(){
 		// console.log(title);
 		$(this).val(selectedVal);
 	})
+	$("#properties_dialogs").css("transform","translate3d("+(innerWidth-240)+"px,20px,0)");
 }
 
 function deleteSelectedObj(){
@@ -668,4 +673,10 @@ function eventHandler(e){
 	e.stopPropagation();
 	e.stopImmediatePropagation();
 	return false;
+}
+
+window.onbeforeunload = function(){
+	if(canvas.toObject().objects.length > 0){
+		return true;
+	}
 }
