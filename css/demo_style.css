@@ -1,0 +1,3 @@
+body{margin:0px;padding:0px;}
+ul, li{list-style-type: none;}
+li{width:100px;height:100px;overflow:hidden;margin:10px;cursor:pointer;float:left;}
