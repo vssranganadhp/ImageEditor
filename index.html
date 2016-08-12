@@ -3,8 +3,11 @@
 	<head>
 		<title>Image Editor</title>
 		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<link rel="stylesheet" type="text/css" href="css/jquery.Jcrop.min.css" />
 		<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css" />
 		<script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
+		<script type="text/javascript" src="js/jquery.canvasAreaDraw.min.js"></script>
+		<script type="text/javascript" src="js/jquery.Jcrop.min.js"></script>
 		<script type="text/javascript" src="js/fabric.js"></script>
 		<script type="text/javascript" src="js/editor.js"></script>
 	</head>
@@ -36,12 +39,27 @@
 			<div id="canvas_container">
 				<canvas id="canvas"></canvas>
 			</div>
+			<div id="crop_image_ops">
+				<img src="" id="image_el" />
+			</div>
+			<div id="measure_image_ops">
+				<textarea id="measure_image"></textarea>
+			</div>
 		</div>
 		<div hidden>
 			<input type="file" id="image_file" accept="image/*" />
 		</div>
 		<div id="splash">
 			<span class="jumping-dots"><text>Loading</text><span></span><span></span><span></span></span>
+		</div>
+		<div id="properties_dialogs">
+			<div id="prop_head"><span>Properties</span><input type="search" id="search_el" placeholder="Search properties" /></div>
+		</div>
+		<div id="coords_div">
+			<div>
+				<textarea id="points"></textarea>
+				<i></i>
+			</div>
 		</div>
 	</body>
 </html>

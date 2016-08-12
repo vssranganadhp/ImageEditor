@@ -3,14 +3,15 @@ body{padding:0px;margin:0px;font-family: Arial, Helvetica, sans-serif;background
 ul, li{list-style-type:none;padding:0px;margin:0px;}
 #splash{top:0px;left:0px;width:100%;height:100%;position:fixed;background:white;z-index:100000000000;display:none;}
 .elements_panel{width:60px;float:left;font-size: 11px;position:absolute;z-index: 100000;background:white;}
-.elements_panel ul > li{height:60px;padding-top: 8px;box-shadow: 0px 0px 0px 1px;margin: 1px;cursor:pointer;}
+.elements_panel ul > li{height:60px;padding-top: 8px;box-shadow: 0px 0px 0px 1px black;margin: 1px;cursor:pointer;}
 .elements_panel ul > li i{font-size: 30px;width: 60px;text-align: center;}
 .elements_panel ul > li span{text-align:center;display: block;margin-top: 3px;}
 .elements_panel > ul > li > ul{position:relative;background:white;top: -54px;left:0px;transition-duration:500ms;display:none;}
 .elements_panel > ul > li.active > ul{left:58px;display:block;}
-#canvas_container{position:fixed;width:100%;height:100%;top:0px;left:0px;}
+li[data-type="Crop"].active, li[data-type="Measure"].active {background: #292929;color: #fff;}
+#canvas_container, #crop_image_ops, #measure_image_ops{position:fixed;width:100%;height:100%;top:0px;left:0px;}
 #canvas_container > div{box-shadow:0px 0px 5px;}
-#canvas_container .canvas-container{left:10%;top:5%;float:left;}
+#canvas_container .canvas-container, #crop_image_ops, #measure_image_ops{left:10%;top:5%;float:left;}
 .small-font{font-size:10px;margin-top: -6px !important;}
 @-webkit-keyframes dancing-dots-jump {0% { top: 0; }55% { top: 0; }60% { top: -10px; }80% { top: 3px; }90% { top: -2px; }95% { top: 1px; }100% { top: 0; }}
 .jumping-dots{padding: 0px;top: calc(50% - 10px);left: calc(50% - 10px);position: absolute;}
@@ -20,3 +21,24 @@ text{vertical-align: text-bottom;font-size: 20px;}
 .jumping-dots > span:nth-child(3) {-webkit-animation-delay: 300ms;}
 i .canvas-container{left:calc(50% - 17px);float:left;cursor:pointer;}
 i .upper-canvas {cursor:pointer !important;}
+#properties_dialogs{background: #fff;width: 220px;z-index: 10000000;position: fixed;/*top: 20px;right: 0px;box-shadow: 0px 0px 3px 0px #000;height: 600px;*/transform:translate3d(0px,1000px,0);}
+#properties_dialogs > div > div > div {padding:8px;background: #efefef;margin: 5px;}
+#properties_dialogs div.prop_body span {/*width: 200px;*/display: inline-block;font-size:15px;float: left;}
+#properties_dialogs div.prop_body input, #properties_dialogs div.prop_body select {margin-top:5px;font-size:14px;width: 100%;}
+#properties_dialogs div.prop_body input[type="checkbox"]{width:auto;margin-left: 10px;margin-top: 0px;vertical-align: text-bottom;}
+#prop_head{text-align: center;width:220px;position: fixed;z-index: 10000000;background: #fff;height:78px;box-shadow: 0px 0px 2px #000;}
+#prop_head > span{font-size: 20px;background: #7d7d7d;color: #fff;padding:5px;cursor: move;-webkit-user-select: none;width: 220px;display: inline-block;position: absolute;left: 0px;}
+#prop_head > input{font-size: 16px;-webkit-appearance: textfield;width: 200px;position: absolute;left: 0px;top: 44px;left: 11px;}
+.prop_body{position:absolute;top:78px;width:100%;overflow-y: scroll;height:522px;background: #fff;box-shadow: 0px 0px 3px 0px #000;}
+#crop_image_ops, #measure_image_ops{display:none;}
+span.crop_icon{width:30px;height:30px;background-size:30px;display: inline-block;position: absolute;top:3px;z-index:1000;cursor:pointer;border-radius:50%;}
+.tick{background: url('../images/select.png') white;right:3px;}
+.close{background: url('../images/close.png') white;right:36px;}
+#measure_image{display:none;position: fixed;top: calc(50% - 50px);font-size: 20px;width: 500px;left: calc(50% - 250px);text-align: center;box-shadow: 0px 0px 10px #808080;padding: 0px;height: 100px;}
+#coords_div{position: fixed;top:0px;left:0px;width:100%;height:100%;z-index:100000000;background:rgba(0,0,0,0.25);display:none;}
+#coords_div div{top:calc(50% - 100px);height:200px;left:calc(50% - 200px);width:400px;position: absolute;box-shadow:0px 0px 5px #c7c7c7;background: #fff;}
+#coords_div textarea{width: 100%;height:100%;resize: none;min-height: 150px;padding: 0px;margin: 0px;border: none;box-shadow: 0px 0px 0px 1px #c7c7c7;font-size:15px;}
+#coords_div textarea:focus{outline:none;}
+#coords_div > div > i{background: url('../images/close_red.png') #fff;width: 30px;height: 30px;background-size: 30px;display: inline-block;position: absolute;top: -15px;right: -15px;border-radius: 50%;cursor:pointer;}
+#coords_div button{float: right;font-weight: bold;-webkit-appearance: none;border:none;background:#9fb2ff;font-size: 16px;color: #000;padding: 6px;margin-right: 10px;margin-top: 2px;border-radius: 2px;cursor:pointer;box-shadow: 0px 2px 1px #000;}
+#coords_div button:hover{box-shadow:none;}
