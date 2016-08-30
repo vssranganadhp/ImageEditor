@@ -1,4 +1,3 @@
-var selectedObj = null, canvas = null;
 (function($, _window){
 	var settings = {
 		contWidth : 0,
@@ -62,7 +61,7 @@ var selectedObj = null, canvas = null;
 	};
 	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand'};
 	var shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
-	// var canvas, selectedObj;
+	var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
 		this.each(function(index, element){
 			init.apply(element, [index, element, options]);
@@ -142,7 +141,7 @@ var selectedObj = null, canvas = null;
 			$("#image_editor_shape_controls").removeClass("active");
 		})
 		$("<canvas />",{"id":"image_editor_canvas"}).appendTo($("#image_editor_container"));
-		$('<div id="image_editor_crop_image_ops"><img src="" id="image_editor_image_el" /></div>').appendTo($("#image_editor_container"));
+		$('<div id="image_editor_crop_image_ops"><img id="image_editor_image_el" /></div>').appendTo($("#image_editor_container"));
 		$('<div id="image_editor_measure_image_ops"><textarea id="image_editor_measure_image"></textarea></div>').appendTo($("#image_editor_container"));
 		$('<div id="image_editor_coords_div"><div><textarea id="image_editor_points"></textarea><i></i></div></div>').appendTo($("#image_editor_container"));
 		$("<div />",{"id":"image_editor_settings"}).appendTo($("#image_editor_container"));
@@ -224,8 +223,7 @@ var selectedObj = null, canvas = null;
 							setProperties();
 						}
 					})
-					var containerWidth = $(".canvas-container").width()/2;
-		            $(".canvas-container").css("left","calc(50% - "+containerWidth+"px)");
+					setPositionsOfInnerElements();
 					getBase64(img.src,function(src){
 						fabric.Image.fromURL(src,function(nimg){
 							nimg.selectable = false;
@@ -263,6 +261,12 @@ var selectedObj = null, canvas = null;
 	var resetSize = function(){
 		settings.contWidth = innerWidth*0.8;
 		settings.contHeight = innerHeight*0.8;
+	}
+	var setPositionsOfInnerElements = function(){
+		var containerWidth = $(".canvas-container").width()/2;
+		var containerHeight = $(".canvas-container").height()/2;
+        $(".canvas-container, #image_editor_crop_image_ops, #image_editor_measure_image_ops").css("left","calc(50% - "+containerWidth+"px)");
+        $(".canvas-container, #image_editor_crop_image_ops, #image_editor_measure_image_ops").css("top","calc(50% - "+containerHeight+"px)");
 	}
 	var resetScaleLimit = function(){
 		settings.maxScale = settings.contHeight/settings.imgHeight;
@@ -484,6 +488,7 @@ var selectedObj = null, canvas = null;
 	}
 
 	function initCrop(){
+		setPositionsOfInnerElements();
 		var target_el = $(".jcrop-holder > div:eq(0) > div:eq(0)");
 		var tick_icon = $('<span />',{'class':'crop_icon tick'});
 		var close_icon = $('<span />',{'class':'crop_icon close'});
@@ -526,8 +531,7 @@ var selectedObj = null, canvas = null;
 					canvas.add(nimg);
 					resetSize();
 					setTimeout(function(){
-						var containerWidth = $(".canvas-container").width()/2;
-			            $(".canvas-container").css("left","calc(50% - "+containerWidth+"px)");
+						setPositionsOfInnerElements();
 			            removeJcrop();
 					},300);
 					// canvas.add(nimg);
@@ -537,7 +541,7 @@ var selectedObj = null, canvas = null;
 					// canvas.renderAll();
 	            })
 			}
-			img.crossOrigin = 'Anonymous';
+			// img.crossOrigin = 'Anonymous';
 			img.src = croppedImage;
 		});
 		$("#image_editor_scale").hide();
