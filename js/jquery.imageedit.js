@@ -101,6 +101,7 @@ var selectedObj = null, canvas = null;
 					$("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
 					$(".canvas-container").hide();
 					$("#image_editor_crop_image_ops").show();
+					$('#image_editor_image_el').css({width:canvas.width,height:canvas.height});
 					$('#image_editor_image_el').attr("src",croppedImage);
 					$('#image_editor_image_el').Jcrop({
 						onSelect : updateCoords
