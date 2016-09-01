@@ -87,6 +87,13 @@
 		}
 		$("#image_editor_controls div").bind("click",function(){
 			var control_type = $(this).attr('data-control-type');
+			$(".canvas-container").show();
+			$("#image_editor_crop_image_ops, #image_editor_measure_image_ops").hide();
+			removeJcrop();
+			$("#image_editor_coords_div").hide();
+			$("#image_editor_points, #image_editor_measure_image").val('');
+			$("#image_editor_measure_image_ops > *").not("textarea").remove();
+			$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
 			switch(control_type){
 				case 'text':
 					addText();
@@ -95,7 +102,7 @@
 					$("#image_editor_shape_controls").addClass("active");
 					break;
 				case 'crop':
-					canvas.discardActiveObject()
+					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
 					$("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
 					$(".canvas-container").hide();
@@ -108,7 +115,7 @@
 					initCrop();
 					break;
 				case 'measure':
-					canvas.discardActiveObject()
+					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
 					$("#image_editor_measure_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
 					$(".canvas-container").hide();
@@ -189,10 +196,15 @@
 				img.onload = function(){
 					var imgWidth = img.naturalWidth;
 					var imgHeight = img.naturalHeight;
-					var canvasWidth = Math.min(imgWidth,settings.contWidth);
-					var canvasHeight = Math.min(imgHeight,settings.contHeight);
 					settings.imgWidth = imgWidth;
 					settings.imgHeight = imgHeight;
+					if(settings.contHeight < settings.imgHeight){
+						settings.contWidth = settings.imgWidth*settings.contHeight/settings.imgHeight;
+					} else if(settings.contWidth < settings.imgWidth) {
+						settings.contHeight = settings.imgHeight*settings.contWidth/settings.imgWidth;
+					}
+					var canvasWidth = Math.min(imgWidth,settings.contWidth);
+					var canvasHeight = Math.min(imgHeight,settings.contHeight);
 					$("#image_editor_canvas").attr({Width:canvasWidth,Height:canvasHeight});
 					canvas = new fabric.Canvas('image_editor_canvas');
 					canvas.on("object:scaling",function(obj){
@@ -243,7 +255,18 @@
 			            });
 			            resetScaleLimit();
 					});
-		            
+		            $(".canvas-container").bind("mousewheel",function(e){
+						var delta = e.originalEvent.wheelDelta/120;
+						var curScale = parseFloat($("#image_editor_scale").val());
+						if(delta > 0){
+							curScale -= 0.01;
+						} else if(delta < 0){
+							curScale += 0.01;
+						}
+						$("#image_editor_scale").val(curScale).trigger("input");
+						eventHandler(e);
+						return false;
+					})
 		            // if((settings.contWidth - imgWidth)/2 < 0){
 		            // 	var currentScale = (settings.contWidth/imgWidth).toFixed(2);
 		            // 	$(".canvas-container").css("transform","scale("+currentScale+")");
@@ -549,7 +572,8 @@
 
 	var removeJcrop = function(){
 		var jcrop_obj = $('#image_editor_image_el').data('Jcrop');
-		jcrop_obj.destroy();
+		if(jcrop_obj)
+			jcrop_obj.destroy();
 		$("#image_editor_crop_image_ops, #image_editor_image_el").removeAttr("style");
 		$("#image_editor_image_el").removeAttr("src");
 		resetScaleLimit();
