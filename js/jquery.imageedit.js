@@ -1,11 +1,12 @@
+var canvas, selectedObj, settings, coords;
 (function($, _window){
-	var settings = {
+	settings = {
 		contWidth : 0,
 		contHeight : 0,
 		minScale : 0.3,
 		maxScale : 1
 	};
-	var coords = {};
+	coords = {};
 	var SVG_START = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="{X}px" y="{Y}px" width="{W}px" height="{H}px">'
 	var SVG_END = '</svg>';
 	var RECT = '<rect x="{X}" y="{Y}" fill="{FILL}" stroke="{S}" stroke-width="{SW}" width="{W}" height="{H}"></rect>';
@@ -61,7 +62,7 @@
 	};
 	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand'};
 	var shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
-	var canvas, selectedObj;
+	// var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
 		this.each(function(index, element){
 			init.apply(element, [index, element, options]);
@@ -111,7 +112,8 @@
 					$('#image_editor_image_el').css({width:canvas.width,height:canvas.height});
 					$('#image_editor_image_el').attr("src",croppedImage);
 					$('#image_editor_image_el').Jcrop({
-						onSelect : updateCoords
+						onSelect : updateCoords,
+						bgColor : ''
 					});
 					initCrop();
 					break;
