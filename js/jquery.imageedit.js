@@ -1,10 +1,11 @@
-var canvas, selectedObj, settings, coords;
+var canvas, selectedObj, settings, coords, filename;
 (function($, _window){
 	settings = {
 		contWidth : 0,
 		contHeight : 0,
 		minScale : 0.3,
-		maxScale : 1
+		maxScale : 1,
+		defaultColor : 'red'
 	};
 	coords = {};
 	var SVG_START = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="{X}px" y="{Y}px" width="{W}px" height="{H}px">'
@@ -60,7 +61,7 @@ var canvas, selectedObj, settings, coords;
 			'src' : 'string'
 		}
 	};
-	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand'};
+	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand', 'save': 'fa-download'};
 	var shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
 	// var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
@@ -128,6 +129,12 @@ var canvas, selectedObj, settings, coords;
 					$('#image_editor_measure_image').attr("data-image-url",croppedImage);
 					$("#image_editor_measure_image").addClass("canvas-area");
 					$('.canvas-area[data-image-url]').canvasAreaDraw();
+					break;
+				case 'save':
+					var src = canvas.toDataURL();
+					var anchor_el = $('<a />',{'href':src,'download':filename+'.png'})[0];
+					anchor_el.click();
+					break;
 			}
 		});
 		$("#image_editor_shape_controls div").bind("click",function(){
@@ -158,7 +165,9 @@ var canvas, selectedObj, settings, coords;
 		$("<div />",{"id":"image_editor_settings"}).appendTo($("#image_editor_container"));
 		$("#image_editor_settings").append($("<input type='range' id='image_editor_scale' class='range-slider__range' min='0.1' step='0.01' />"))
 		$("#image_editor_settings").append($("<div id='image_editor_close_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
-		$("<div />",{"id":"image_editor_properties_dialogs"}).appendTo($("#image_editor_container"));
+		if(options.show_props){
+			$("<div />",{"id":"image_editor_properties_dialogs"}).appendTo($("#image_editor_container"));
+		}
 		$("#image_editor_close_icon").bind("click",function(){
 			closeEditor();
 		});
@@ -195,6 +204,10 @@ var canvas, selectedObj, settings, coords;
 	var init = function(index, element, options){
 		$(element).bind("click",function(){
 			var src = $(this).attr("src");
+			if(src.indexOf('data:') == 0){
+				filename = 'image_'+(Date.now()%10000).toString();
+			}
+			filename = getFileName(src);
 			if(src){
 				var img = new Image();
 				img.onload = function(){
@@ -296,10 +309,11 @@ var canvas, selectedObj, settings, coords;
         $(".canvas-container, #image_editor_crop_image_ops, #image_editor_measure_image_ops").css("top","calc(50% - "+containerHeight+"px)");
 	}
 	var resetScaleLimit = function(){
-		settings.maxScale = settings.contHeight/settings.imgHeight;
+		settings.curScale = settings.contHeight/settings.imgHeight;
         $("#image_editor_scale").data("isChangedProg",true);
-        $("#image_editor_scale").attr("max",settings.maxScale*2);
+        $("#image_editor_scale").attr("max",settings.maxScale);
         $("#image_editor_scale").val(1);
+        $(".canvas-container").css("transform","scale(1)");
         $("#image_editor_scale").data("isChangedProg","");
 	}
 	var initSettings = function(){
@@ -396,7 +410,7 @@ var canvas, selectedObj, settings, coords;
 			fontFamily: 'Helvetica',
 			angle: 0,
 			fontSize: 20,
-			fill: 'black',
+			fill: settings.defaultColor,
 			hasRotatingPoint: true,
 			centerTransform: true,
 			editable : true
@@ -605,7 +619,7 @@ var canvas, selectedObj, settings, coords;
 		var left = Math.round(obj.left);
 		var str = '';
 		str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
-		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}','black').replace('{SW}','5');
+		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
@@ -619,7 +633,7 @@ var canvas, selectedObj, settings, coords;
 		var left = Math.round(obj.left);
 		var str = '';
 		str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
-		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}','black').replace('{SW}','5');
+		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
@@ -629,7 +643,7 @@ var canvas, selectedObj, settings, coords;
 
 	var addLine = function(){
 		var lineObj = new fabric.Line([ 0, 100, 100, 100], {
-	      stroke : 'black',
+	      stroke : settings.defaultColor,
 	      strokeWidth : 2
 	    });
 	    makeCenterAndRedraw(lineObj);
@@ -637,10 +651,10 @@ var canvas, selectedObj, settings, coords;
 
 	var addRectangle = function(){
 		var rectObj = new fabric.Rect({
-	      // fill: 'transparent',
+	      fill: 'transparent',
 	      width: 150,
 	      height: 100,
-	      stroke : 'black',
+	      stroke : settings.defaultColor,
 	      strokeWidth : 2
 	    })
 	    makeCenterAndRedraw(rectObj);
@@ -648,9 +662,9 @@ var canvas, selectedObj, settings, coords;
 
 	var addCircle = function(){
 		var cirObj = new fabric.Circle({
-			// fill: 'transparent',
+			fill: 'transparent',
 			radius: 50,
-			stroke : 'black',
+			stroke : settings.defaultColor,
 			strokeWidth : 2
 		})
 		makeCenterAndRedraw(cirObj);
@@ -687,6 +701,15 @@ var canvas, selectedObj, settings, coords;
 		e.stopPropagation();
 		e.stopImmediatePropagation();
 		return false;
+	}
+	var getFileName = function(url){
+	   if (url){
+	      var m = url.toString().match(/.*\/(.+?)\./);
+	      if (m && m.length > 1){
+	         return m[1];
+	      }
+	   }
+	   return "";
 	}
 	$(_window).on("resize",resetSize);
 })(jQuery, window);

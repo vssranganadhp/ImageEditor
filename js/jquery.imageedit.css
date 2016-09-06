@@ -7,7 +7,7 @@
 #image_editor_measure_image{display:none;}
 #image_editor_shape_controls .image_editor_control_icons {width: 20%;}
 #image_editor_shape_controls.active{top:0px;}
-.image_editor_control_icons {width: 25%;float: left;background: #fff;padding: 10px;text-align: center;box-sizing: border-box;font-size: 16px;font-family:Arial,Helvetica,sans-serif;cursor:pointer;-webkit-user-select:none;height:65px;}
+.image_editor_control_icons {width: 20%;float: left;background: #fff;padding: 10px;text-align: center;box-sizing: border-box;font-size: 16px;font-family:Arial,Helvetica,sans-serif;cursor:pointer;-webkit-user-select:none;height:65px;}
 .image_editor_control_icons i {font-size: 27px;}
 .image_editor_control_icons span {display: block;}
 .image_editor_control_icons:hover{background:grey;color:white;}
