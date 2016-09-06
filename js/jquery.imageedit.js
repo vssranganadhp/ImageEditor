@@ -104,7 +104,8 @@
 				case 'crop':
 					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
-					$("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					// $("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					$("#image_editor_crop_image_ops").css({width:canvas.width,height:canvas.height});
 					$(".canvas-container").hide();
 					$("#image_editor_crop_image_ops").show();
 					$('#image_editor_image_el').css({width:canvas.width,height:canvas.height});
