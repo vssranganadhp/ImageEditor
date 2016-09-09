@@ -133,6 +133,7 @@ var canvas, selectedObj, settings, coords, filename;
 						$('.canvas-area[data-image-url]').canvasAreaDraw();
 					}
 					img.src = croppedImage;
+					$("#image_editor_scale").hide();
 					break;
 				case 'save':
 					var src = canvas.toDataURL();
@@ -201,6 +202,7 @@ var canvas, selectedObj, settings, coords, filename;
 			$(".canvas-container").show();
 			$("#image_editor_measure_image_ops > *").not("textarea").remove();
 			$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+			$("#image_editor_scale").show();
 		})
 		initSettings();
 	}
