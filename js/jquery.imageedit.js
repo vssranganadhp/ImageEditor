@@ -126,6 +126,11 @@ var canvas, selectedObj, settings, coords, filename;
 					$(".canvas-container").hide();
 					$("#image_editor_measure_image_ops").show();
 					// croppedImage = 'http://farm8.staticflickr.com/7259/6956772778_2fa755a228.jpg';
+					var img = new Image();
+					img.onload = function(){
+						alert(img.naturalWidth);
+					}
+					img.src = croppedImage;
 					$('#image_editor_measure_image').attr("data-image-url",croppedImage);
 					$("#image_editor_measure_image").addClass("canvas-area");
 					$('.canvas-area[data-image-url]').canvasAreaDraw();
