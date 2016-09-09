@@ -128,12 +128,11 @@ var canvas, selectedObj, settings, coords, filename;
 					// croppedImage = 'http://farm8.staticflickr.com/7259/6956772778_2fa755a228.jpg';
 					var img = new Image();
 					img.onload = function(){
-						alert(img.naturalWidth);
+						$('#image_editor_measure_image').attr("data-image-url",img.src);
+						$("#image_editor_measure_image").addClass("canvas-area");
+						$('.canvas-area[data-image-url]').canvasAreaDraw();
 					}
 					img.src = croppedImage;
-					$('#image_editor_measure_image').attr("data-image-url",croppedImage);
-					$("#image_editor_measure_image").addClass("canvas-area");
-					$('.canvas-area[data-image-url]').canvasAreaDraw();
 					break;
 				case 'save':
 					var src = canvas.toDataURL();
