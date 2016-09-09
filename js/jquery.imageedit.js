@@ -128,12 +128,12 @@ var canvas, selectedObj, settings, coords, filename;
 					// croppedImage = 'http://farm8.staticflickr.com/7259/6956772778_2fa755a228.jpg';
 					var img = new Image();
 					img.onload = function(){
+						$("#image_editor_measure_popup").addClass("active");
 						$('#image_editor_measure_image').attr("data-image-url",img.src);
 						$("#image_editor_measure_image").addClass("canvas-area");
 						$('.canvas-area[data-image-url]').canvasAreaDraw();
 					}
 					img.src = croppedImage;
-					$("#image_editor_scale").hide();
 					break;
 				case 'save':
 					var src = canvas.toDataURL();
@@ -170,6 +170,22 @@ var canvas, selectedObj, settings, coords, filename;
 		$("<div />",{"id":"image_editor_settings"}).appendTo($("#image_editor_container"));
 		$("#image_editor_settings").append($("<input type='range' id='image_editor_scale' class='range-slider__range' min='0.1' step='0.01' />"))
 		$("#image_editor_settings").append($("<div id='image_editor_close_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
+		$("<div />",{"id":"image_editor_measure_popup"}).appendTo($("#image_editor_container"));
+		var measure_props = ["Real Distance","Ratio", "Calculated Area", "Calculated Distance"];
+		var $div = $('<div />',{'class':'image_editor_measure_popup_head'});
+		$div.append($('<span />').text('Measure properties'));
+		$("#image_editor_measure_popup").append($div);
+		measure_props.forEach(function(a){
+			var $div = $('<div />',{'class':'image_editor_measure_popup_opts'});
+			$div.append($('<span />').text(a));
+			$div.append($('<input />',{'type':'text','data-measure_prop':a}));
+			$("#image_editor_measure_popup").append($div);
+		})
+		var $div = $('<div />',{'class':'image_editor_measure_popup_opts'});
+		$div.append($('<button />',{'type':'button','class':'image_editor_clear_measure'}).text("Clear"));
+		$div.append($('<button />',{'type':'button','class':'image_editor_close_measure'}).text("Close"));
+		$("#image_editor_measure_popup").append($div);
+		$("#image_editor_measure_popup").css("transform","translate3d(20px,"+(innerHeight-270)+"px,0)");
 		if(options.show_props){
 			$("<div />",{"id":"image_editor_properties_dialogs"}).appendTo($("#image_editor_container"));
 		}
@@ -179,7 +195,7 @@ var canvas, selectedObj, settings, coords, filename;
 		$("#image_editor_scale").on("input",function(){
 			var scale = $(this).val();
 			if(!$(this).data("isChangedProg")){
-				$(".canvas-container").css("transform","scale("+scale+")");
+				$(".canvas-container, #image_editor_measure_image_ops").css("transform","scale("+scale+")");
 			}
 		});
 		$("body").bind("keydown",function(e){
@@ -197,12 +213,7 @@ var canvas, selectedObj, settings, coords, filename;
 			}
 		});
 		$("#image_editor_coords_div i").bind("click",function(){
-			$("#image_editor_coords_div").hide();
-			$("#image_editor_measure_image_ops").hide();
-			$(".canvas-container").show();
-			$("#image_editor_measure_image_ops > *").not("textarea").remove();
-			$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
-			$("#image_editor_scale").show();
+			closeMeasure();
 		})
 		initSettings();
 	}
@@ -278,7 +289,7 @@ var canvas, selectedObj, settings, coords, filename;
 			            });
 			            resetScaleLimit();
 					});
-		            $(".canvas-container").bind("mousewheel",function(e){
+		            $(".canvas-container, #image_editor_measure_image_ops").bind("mousewheel",function(e){
 						var delta = e.originalEvent.wheelDelta/120;
 						var curScale = parseFloat($("#image_editor_scale").val());
 						if(delta > 0){
@@ -348,6 +359,28 @@ var canvas, selectedObj, settings, coords, filename;
 						$("*").unbind("mousemove mouseup");
 					})
 				})
+				$("#image_editor_measure_popup .image_editor_measure_popup_head").bind("mousedown",function(event){
+					var clientX = event.offsetX;
+					var clientY = event.offsetY;
+					$("#image_editor_container").bind("mousemove",function(e){
+						var left = e.pageX-clientX;
+						var top = e.pageY-clientY;
+						$("#image_editor_measure_popup").css('transform','translate3d('+left+'px,'+top+'px,0px)');
+					});
+					$("#image_editor_container").bind("mouseup",function(){
+						$("#image_editor_container").unbind("mousemove mouseup");
+					})
+				})
+				$(".image_editor_clear_measure").bind("click",function(){
+					$("#image_editor_measure_image").data("points",[]);
+					var draw = $("#image_editor_measure_image").data("draw");
+					if(typeof draw == 'function'){
+						draw([]);
+					}
+				})
+				$(".image_editor_close_measure").bind("click",function(){
+					closeMeasure();
+				})
 				$(".prop_body input").bind("input",function(){
 					var val = $(this).val();
 					var el_prop = $(this).attr('title');
@@ -409,11 +442,7 @@ var canvas, selectedObj, settings, coords, filename;
 	var closeEditor = function(){
 		canvas.dispose();
 		$("#image_editor_container").removeClass("active");
-		$("#image_editor_coords_div").hide();
-		$("#image_editor_measure_image_ops").hide();
-		$(".canvas-container").show();
-		$("#image_editor_measure_image_ops > *").not("textarea").remove();
-		$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+		closeMeasure();
 	}
 	var addText = function(){
 		var text = 'Enter Text Here';
@@ -622,6 +651,14 @@ var canvas, selectedObj, settings, coords, filename;
 		}
 	}
 
+	var closeMeasure = function(){
+		$("#image_editor_measure_popup").removeClass("active");
+		$("#image_editor_coords_div").hide();
+		$("#image_editor_measure_image_ops").hide();
+		$(".canvas-container").show();
+		$("#image_editor_measure_image_ops > *").not("textarea").remove();
+		$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+	}
 	/*shapes*/
 
 	var addArrow = function(){
