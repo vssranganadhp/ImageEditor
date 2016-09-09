@@ -403,6 +403,11 @@ var canvas, selectedObj, settings, coords, filename;
 	var closeEditor = function(){
 		canvas.dispose();
 		$("#image_editor_container").removeClass("active");
+		$("#image_editor_coords_div").hide();
+		$("#image_editor_measure_image_ops").hide();
+		$(".canvas-container").show();
+		$("#image_editor_measure_image_ops > *").not("textarea").remove();
+		$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
 	}
 	var addText = function(){
 		var text = 'Enter Text Here';
