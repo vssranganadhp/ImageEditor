@@ -1,4 +1,5 @@
 *, *:before, *:after {box-sizing: border-box;}
+#image_editor_container *{-webkit-user-select:none;}
 #image_editor_container{position:fixed;top:0px;left:0px;width:100%;height:100%;display:none;background:rgba(0,0,0,0.4);}
 #image_editor_container.active{display: block;}
 #image_editor_controls{position:absolute;top:0px;left:30%;width:40%;height:65px;box-shadow: 0px 0px 3px;z-index:100000;}
@@ -9,7 +10,7 @@
 #image_editor_shape_controls.active{top:0px;}
 .image_editor_control_icons {width: 20%;float: left;background: #fff;padding: 10px;text-align: center;box-sizing: border-box;font-size: 16px;font-family:Arial,Helvetica,sans-serif;cursor:pointer;-webkit-user-select:none;height:65px;}
 .image_editor_control_icons i {font-size: 27px;}
-.image_editor_control_icons span {display: block;}
+.image_editor_control_icons span {display: block;text-overflow:ellipsis;overflow:hidden;}
 .image_editor_control_icons:hover{background:grey;color:white;}
 .image_editor_control_icons:active{background:black;color:white;}
 #image_editor_close_icon{position: fixed;top: -25px;right: -25px;color: #fff;background: #565656;width: 70px;border-radius: 50%;font-size: 30px;height: 70px;line-height: 86px;text-indent: 8px;cursor: pointer;}
@@ -54,3 +55,4 @@ span.crop_icon{width:30px;height:30px;background-size:30px;display: inline-block
 #image_editor_measure_popup button.image_editor_close_measure{background: #7f77ff;}
 #image_editor_measure_popup button:hover {box-shadow: none;}
 #image_editor_measure_popup button:focus{outline:none;}
+.image_editor_move_cursor, .image_editor_move_cursor *{cursor: move !important;}
