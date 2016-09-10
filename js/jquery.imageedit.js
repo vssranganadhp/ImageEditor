@@ -1,11 +1,13 @@
+var canvas, selectedObj, settings, coords, filename;
 (function($, _window){
-	var settings = {
+	settings = {
 		contWidth : 0,
 		contHeight : 0,
 		minScale : 0.3,
-		maxScale : 1
+		maxScale : 1,
+		defaultColor : 'red'
 	};
-	var coords = {};
+	coords = {};
 	var SVG_START = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="{X}px" y="{Y}px" width="{W}px" height="{H}px">'
 	var SVG_END = '</svg>';
 	var RECT = '<rect x="{X}" y="{Y}" fill="{FILL}" stroke="{S}" stroke-width="{SW}" width="{W}" height="{H}"></rect>';
@@ -59,9 +61,9 @@
 			'src' : 'string'
 		}
 	};
-	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand'};
+	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand', 'save': 'fa-download'};
 	var shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
-	var canvas, selectedObj;
+	// var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
 		this.each(function(index, element){
 			init.apply(element, [index, element, options]);
@@ -87,6 +89,13 @@
 		}
 		$("#image_editor_controls div").bind("click",function(){
 			var control_type = $(this).attr('data-control-type');
+			$(".canvas-container").show();
+			$("#image_editor_crop_image_ops, #image_editor_measure_image_ops").hide();
+			removeJcrop();
+			$("#image_editor_coords_div").hide();
+			$("#image_editor_points, #image_editor_measure_image").val('');
+			$("#image_editor_measure_image_ops > *").not("textarea").remove();
+			$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
 			switch(control_type){
 				case 'text':
 					addText();
@@ -95,27 +104,42 @@
 					$("#image_editor_shape_controls").addClass("active");
 					break;
 				case 'crop':
-					canvas.discardActiveObject()
+					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
-					$("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					// $("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					$("#image_editor_crop_image_ops").css({width:canvas.width,height:canvas.height});
 					$(".canvas-container").hide();
 					$("#image_editor_crop_image_ops").show();
+					$('#image_editor_image_el').css({width:canvas.width,height:canvas.height});
 					$('#image_editor_image_el').attr("src",croppedImage);
 					$('#image_editor_image_el').Jcrop({
-						onSelect : updateCoords
+						onSelect : updateCoords,
+						bgColor : ''
 					});
 					initCrop();
 					break;
 				case 'measure':
-					canvas.discardActiveObject()
+					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
-					$("#image_editor_measure_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					// $("#image_editor_measure_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					$("#image_editor_measure_image_ops").css({width:canvas.width,height:canvas.height});
 					$(".canvas-container").hide();
 					$("#image_editor_measure_image_ops").show();
 					// croppedImage = 'http://farm8.staticflickr.com/7259/6956772778_2fa755a228.jpg';
-					$('#image_editor_measure_image').attr("data-image-url",croppedImage);
-					$("#image_editor_measure_image").addClass("canvas-area");
-					$('.canvas-area[data-image-url]').canvasAreaDraw();
+					var img = new Image();
+					img.onload = function(){
+						$("#image_editor_measure_popup").addClass("active");
+						$('#image_editor_measure_image').attr("data-image-url",img.src);
+						$("#image_editor_measure_image").addClass("canvas-area");
+						$('.canvas-area[data-image-url]').canvasAreaDraw();
+					}
+					img.src = croppedImage;
+					break;
+				case 'save':
+					var src = canvas.toDataURL();
+					var anchor_el = $('<a />',{'href':src,'download':filename+'.png'})[0];
+					anchor_el.click();
+					break;
 			}
 		});
 		$("#image_editor_shape_controls div").bind("click",function(){
@@ -146,14 +170,32 @@
 		$("<div />",{"id":"image_editor_settings"}).appendTo($("#image_editor_container"));
 		$("#image_editor_settings").append($("<input type='range' id='image_editor_scale' class='range-slider__range' min='0.1' step='0.01' />"))
 		$("#image_editor_settings").append($("<div id='image_editor_close_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
-		$("<div />",{"id":"image_editor_properties_dialogs"}).appendTo($("#image_editor_container"));
+		$("<div />",{"id":"image_editor_measure_popup"}).appendTo($("#image_editor_container"));
+		var measure_props = ["Real Distance","Ratio", "Calculated Area", "Calculated Distance"];
+		var $div = $('<div />',{'class':'image_editor_measure_popup_head'});
+		$div.append($('<span />').text('Measure properties'));
+		$("#image_editor_measure_popup").append($div);
+		measure_props.forEach(function(a){
+			var $div = $('<div />',{'class':'image_editor_measure_popup_opts'});
+			$div.append($('<span />').text(a));
+			$div.append($('<input />',{'type':'text','data-measure_prop':a}));
+			$("#image_editor_measure_popup").append($div);
+		})
+		var $div = $('<div />',{'class':'image_editor_measure_popup_opts'});
+		$div.append($('<button />',{'type':'button','class':'image_editor_clear_measure'}).text("Clear"));
+		$div.append($('<button />',{'type':'button','class':'image_editor_close_measure'}).text("Close"));
+		$("#image_editor_measure_popup").append($div);
+		$("#image_editor_measure_popup").css("transform","translate3d(20px,"+(innerHeight-270)+"px,0)");
+		if(options.show_props){
+			$("<div />",{"id":"image_editor_properties_dialogs"}).appendTo($("#image_editor_container"));
+		}
 		$("#image_editor_close_icon").bind("click",function(){
 			closeEditor();
 		});
 		$("#image_editor_scale").on("input",function(){
 			var scale = $(this).val();
 			if(!$(this).data("isChangedProg")){
-				$(".canvas-container").css("transform","scale("+scale+")");
+				$(".canvas-container, #image_editor_measure_image_ops").css("transform","scale("+scale+")");
 			}
 		});
 		$("body").bind("keydown",function(e){
@@ -171,11 +213,7 @@
 			}
 		});
 		$("#image_editor_coords_div i").bind("click",function(){
-			$("#image_editor_coords_div").hide();
-			$("#image_editor_measure_image_ops").hide();
-			$(".canvas-container").show();
-			$("#image_editor_measure_image_ops > *").not("textarea").remove();
-			$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+			closeMeasure();
 		})
 		initSettings();
 	}
@@ -183,15 +221,24 @@
 	var init = function(index, element, options){
 		$(element).bind("click",function(){
 			var src = $(this).attr("src");
+			if(src.indexOf('data:') == 0){
+				filename = 'image_'+(Date.now()%10000).toString();
+			}
+			filename = getFileName(src);
 			if(src){
 				var img = new Image();
 				img.onload = function(){
 					var imgWidth = img.naturalWidth;
 					var imgHeight = img.naturalHeight;
-					var canvasWidth = Math.min(imgWidth,settings.contWidth);
-					var canvasHeight = Math.min(imgHeight,settings.contHeight);
 					settings.imgWidth = imgWidth;
 					settings.imgHeight = imgHeight;
+					if(settings.contHeight < settings.imgHeight){
+						settings.contWidth = settings.imgWidth*settings.contHeight/settings.imgHeight;
+					} else if(settings.contWidth < settings.imgWidth) {
+						settings.contHeight = settings.imgHeight*settings.contWidth/settings.imgWidth;
+					}
+					var canvasWidth = Math.min(imgWidth,settings.contWidth);
+					var canvasHeight = Math.min(imgHeight,settings.contHeight);
 					$("#image_editor_canvas").attr({Width:canvasWidth,Height:canvasHeight});
 					canvas = new fabric.Canvas('image_editor_canvas');
 					canvas.on("object:scaling",function(obj){
@@ -242,7 +289,18 @@
 			            });
 			            resetScaleLimit();
 					});
-		            
+		            $(".canvas-container, #image_editor_measure_image_ops").bind("mousewheel",function(e){
+						var delta = e.originalEvent.wheelDelta/120;
+						var curScale = parseFloat($("#image_editor_scale").val());
+						if(delta > 0){
+							curScale -= 0.01;
+						} else if(delta < 0){
+							curScale += 0.01;
+						}
+						$("#image_editor_scale").val(curScale).trigger("input");
+						eventHandler(e);
+						return false;
+					})
 		            // if((settings.contWidth - imgWidth)/2 < 0){
 		            // 	var currentScale = (settings.contWidth/imgWidth).toFixed(2);
 		            // 	$(".canvas-container").css("transform","scale("+currentScale+")");
@@ -268,10 +326,11 @@
         $(".canvas-container, #image_editor_crop_image_ops, #image_editor_measure_image_ops").css("top","calc(50% - "+containerHeight+"px)");
 	}
 	var resetScaleLimit = function(){
-		settings.maxScale = settings.contHeight/settings.imgHeight;
+		settings.curScale = settings.contHeight/settings.imgHeight;
         $("#image_editor_scale").data("isChangedProg",true);
-        $("#image_editor_scale").attr("max",settings.maxScale*2);
+        $("#image_editor_scale").attr("max",settings.maxScale);
         $("#image_editor_scale").val(1);
+        $(".canvas-container").css("transform","scale(1)");
         $("#image_editor_scale").data("isChangedProg","");
 	}
 	var initSettings = function(){
@@ -299,6 +358,28 @@
 					$("*").bind("mouseup",function(){
 						$("*").unbind("mousemove mouseup");
 					})
+				})
+				$("#image_editor_measure_popup .image_editor_measure_popup_head").bind("mousedown",function(event){
+					var clientX = event.offsetX;
+					var clientY = event.offsetY;
+					$("#image_editor_container").bind("mousemove",function(e){
+						var left = e.pageX-clientX;
+						var top = e.pageY-clientY;
+						$("#image_editor_measure_popup").css('transform','translate3d('+left+'px,'+top+'px,0px)');
+					});
+					$("#image_editor_container").bind("mouseup",function(){
+						$("#image_editor_container").unbind("mousemove mouseup");
+					})
+				})
+				$(".image_editor_clear_measure").bind("click",function(){
+					$("#image_editor_measure_image").data("points",[]);
+					var draw = $("#image_editor_measure_image").data("draw");
+					if(typeof draw == 'function'){
+						draw([]);
+					}
+				})
+				$(".image_editor_close_measure").bind("click",function(){
+					closeMeasure();
 				})
 				$(".prop_body input").bind("input",function(){
 					var val = $(this).val();
@@ -361,6 +442,7 @@
 	var closeEditor = function(){
 		canvas.dispose();
 		$("#image_editor_container").removeClass("active");
+		closeMeasure();
 	}
 	var addText = function(){
 		var text = 'Enter Text Here';
@@ -368,7 +450,7 @@
 			fontFamily: 'Helvetica',
 			angle: 0,
 			fontSize: 20,
-			fill: 'black',
+			fill: settings.defaultColor,
 			hasRotatingPoint: true,
 			centerTransform: true,
 			editable : true
@@ -506,6 +588,10 @@
 				can.width = img.naturalWidth;
 				can.height = img.naturalHeight;
 				var cxt = can.getContext('2d');
+				coords.x *= devicePixelRatio;
+				coords.y *= devicePixelRatio;
+				coords.w *= devicePixelRatio;
+				coords.h *= devicePixelRatio;
 				cxt.drawImage(img,0,0);
 				var data = cxt.getImageData(coords.x,coords.y,coords.w,coords.h);
 				var temp_can = document.createElement('canvas');
@@ -548,7 +634,8 @@
 
 	var removeJcrop = function(){
 		var jcrop_obj = $('#image_editor_image_el').data('Jcrop');
-		jcrop_obj.destroy();
+		if(jcrop_obj)
+			jcrop_obj.destroy();
 		$("#image_editor_crop_image_ops, #image_editor_image_el").removeAttr("style");
 		$("#image_editor_image_el").removeAttr("src");
 		resetScaleLimit();
@@ -564,6 +651,14 @@
 		}
 	}
 
+	var closeMeasure = function(){
+		$("#image_editor_measure_popup").removeClass("active");
+		$("#image_editor_coords_div").hide();
+		$("#image_editor_measure_image_ops").hide();
+		$(".canvas-container").show();
+		$("#image_editor_measure_image_ops > *").not("textarea").remove();
+		$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+	}
 	/*shapes*/
 
 	var addArrow = function(){
@@ -572,7 +667,7 @@
 		var left = Math.round(obj.left);
 		var str = '';
 		str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
-		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}','black').replace('{SW}','5');
+		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
@@ -586,7 +681,7 @@
 		var left = Math.round(obj.left);
 		var str = '';
 		str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
-		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}','black').replace('{SW}','5');
+		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
@@ -596,7 +691,7 @@
 
 	var addLine = function(){
 		var lineObj = new fabric.Line([ 0, 100, 100, 100], {
-	      stroke : 'black',
+	      stroke : settings.defaultColor,
 	      strokeWidth : 2
 	    });
 	    makeCenterAndRedraw(lineObj);
@@ -604,10 +699,10 @@
 
 	var addRectangle = function(){
 		var rectObj = new fabric.Rect({
-	      // fill: 'transparent',
+	      fill: 'transparent',
 	      width: 150,
 	      height: 100,
-	      stroke : 'black',
+	      stroke : settings.defaultColor,
 	      strokeWidth : 2
 	    })
 	    makeCenterAndRedraw(rectObj);
@@ -615,9 +710,9 @@
 
 	var addCircle = function(){
 		var cirObj = new fabric.Circle({
-			// fill: 'transparent',
+			fill: 'transparent',
 			radius: 50,
-			stroke : 'black',
+			stroke : settings.defaultColor,
 			strokeWidth : 2
 		})
 		makeCenterAndRedraw(cirObj);
@@ -654,6 +749,15 @@
 		e.stopPropagation();
 		e.stopImmediatePropagation();
 		return false;
+	}
+	var getFileName = function(url){
+	   if (url){
+	      var m = url.toString().match(/.*\/(.+?)\./);
+	      if (m && m.length > 1){
+	         return m[1];
+	      }
+	   }
+	   return "";
 	}
 	$(_window).on("resize",resetSize);
 })(jQuery, window);
