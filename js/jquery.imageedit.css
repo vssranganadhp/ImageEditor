@@ -55,4 +55,4 @@ span.crop_icon{width:30px;height:30px;background-size:30px;display: inline-block
 #image_editor_measure_popup button.image_editor_close_measure{background: #7f77ff;}
 #image_editor_measure_popup button:hover {box-shadow: none;}
 #image_editor_measure_popup button:focus{outline:none;}
-.image_editor_move_cursor, .image_editor_move_cursor *{cursor: move !important;}
+/*.image_editor_move_cursor, .image_editor_move_cursor *{cursor: move !important;}*/

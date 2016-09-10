@@ -14,8 +14,8 @@ var canvas, selectedObj, settings, coords, filename;
 	var ROUND_RECT = '<rect x="{X}" y="{Y}" fill="{FILL}" stroke="{S}" stroke-width="{SW}" width="{W}" height="{H}" rx="{RX}" ry="{RY}"></rect>';
 	var CIRCLE = '<circle fill="{FILL}" stroke="{S}" stroke-width="{SW}" cx="{X}" cy="{Y}" r="{R}"></circle>';
 	var LINE = '<line x1="{X1}" y1="{Y1}" x2="{X2}" y2="{Y2}" marker-end="url(#triangle)" stroke="{S}" stroke-width="{SW}"></line>';
-	var MARKER = '<marker xmlns="http://www.w3.org/2000/svg" id="triangle" refX="0" refY="5" markerUnits="strokeWidth" markerHeight="2" markerWidth="2"><path d="M 40 5 L 50 10 L 40 15 z"/></marker>';
-	var REVMARKER = '<marker xmlns="http://www.w3.org/2000/svg" id="triangle" refX="0" refY="5" markerUnits="strokeWidth" markerHeight="2" markerWidth="2"><path d="M 0 10 L 10 5 L 10 15 z"/><path d="M 40 5 L 50 10 L 40 15 z"/></marker>';
+	var MARKER = '<marker xmlns="http://www.w3.org/2000/svg" id="triangle" refX="0" refY="5" markerUnits="strokeWidth" markerHeight="2" markerWidth="2" fill="red"><path d="M 40 5 L 50 10 L 40 15 z"/></marker>';
+	var REVMARKER = '<marker xmlns="http://www.w3.org/2000/svg" id="triangle" refX="0" refY="5" markerUnits="strokeWidth" markerHeight="2" markerWidth="2" fill="red"><path d="M 0 10 L 10 5 L 10 15 z"/><path d="M 40 5 L 50 10 L 40 15 z"/></marker>';
 	var fonts = ["Aclonica", "Acme", "Akronim", "Aladin", "Alegreya", "Allerta", "Allura", "Amita", "Arbutus", "Architects Daughter", "Archivo Black", "Atomic Age", "Aubrey", "Bangers", "Basic", "Baumans", "Belleza", "BenchNine", "Berkshire Swash", "Bigshot One", "Bilbo", "Butcherman", "Caesar Dressing", "Cambo", "Candal", "Capriola", "Carrois Gothic", "Carter One", "Caveat Brush", "Cherry Cream Soda", "Codystar", "Convergence", "Covered By Your Grace", "Croissant One", "Crushed", "Days One", "Devonshire", "Dhurjati", "Diplomata", "Droid Sans Mono", "Duru Sans", "Engagement", "Englebert", "Ewert", "Faster One", "Griffy", "Helvetica","Iceberg", "Jacques Francois", "Lato", "Londrina Outline", "Marko One", "Marvel", "Monoton", "Mrs Sheppards", "Mystery Quest", "Nosifer", "Nova Cut", "Open Sans", "Oregano", "Oswald", "Oxygen Mono", "Press Start 2P", "Quicksand", "Ribeye", "Roboto", "Rosario", "Russo One", "Shojumaru", "Source Code Pro", "Swanky and Moo Moo", "The Girl Next Door", "Ubuntu", "UnifrakturMaguntia", "Voces", "Zeyada"];
 	var properties = {
 		'default':{
@@ -300,10 +300,13 @@ var canvas, selectedObj, settings, coords, filename;
 							nimg.hasBorders = false;
 							nimg.mainImage = true;
 							if((settings.contWidth - nimg.width)/2 < 0){
-								var currentScale = (settings.contWidth/nimg.width).toFixed(2);
-								// alert(currentScale);
+								if(settings.contHeight/settings.imgHeight < settings.contWidth/settings.imgWidth){
+									settings.curScale = settings.contHeight/settings.imgHeight;
+								} else {
+									settings.curScale = settings.contWidth/settings.imgWidth;
+								}
 								// nimg.scale(currentScale);
-								$(".canvas-container, #image_editor_measure_image_ops").css("transform","scale("+currentScale+")");
+								$(".canvas-container, #image_editor_measure_image_ops").css("transform","scale("+settings.curScale+")");
 								// $(".canvas-container").css("transform","scale(1)");
 							}
 			            	canvas.add(nimg);
@@ -739,6 +742,9 @@ var canvas, selectedObj, settings, coords, filename;
 		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
+			objects.forEach(function(a){
+				a.fill = settings.defaultColor;
+			})
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
 			makeCenterAndRedraw(loadedObject);
 		})
@@ -753,6 +759,9 @@ var canvas, selectedObj, settings, coords, filename;
 		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
+			objects.forEach(function(a){
+				a.fill = settings.defaultColor;
+			})
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
 			makeCenterAndRedraw(loadedObject);
 		})
