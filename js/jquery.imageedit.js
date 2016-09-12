@@ -8,6 +8,8 @@ var canvas, selectedObj, settings, coords, filename;
 		defaultColor : 'red'
 	};
 	coords = {};
+	var measured_scale = 1;
+	var isCleaned = false;
 	var SVG_START = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="{X}px" y="{Y}px" width="{W}px" height="{H}px">'
 	var SVG_END = '</svg>';
 	var RECT = '<rect x="{X}" y="{Y}" fill="{FILL}" stroke="{S}" stroke-width="{SW}" width="{W}" height="{H}"></rect>';
@@ -68,76 +70,91 @@ var canvas, selectedObj, settings, coords, filename;
 		this.each(function(index, element){
 			init.apply(element, [index, element, options]);
 		});
-		$("<div />",{"id":"image_editor_container"}).appendTo($("body"));
-		$("<div />",{"id":"image_editor_controls"}).appendTo($("#image_editor_container"));
+		$("<div />",{"id":"IEcontainer"}).appendTo($("body"));
+		$("<div />",{"id":"IEcontrols"}).appendTo($("#IEcontainer"));
 		for(var i in controls){
-			var $div = $('<div />',{'class':'image_editor_control_icons '+i,'data-control-type':i})
+			var $div = $('<div />',{'class':'IEcontrol_icons '+i,'data-control-type':i})
 			$div.append($('<i />',{'class':'fa '+controls[i],'aria-hidden':true}));
 			$div.append($('<span />').text(i.toUpperCase()));
-			$div.appendTo($("#image_editor_controls"));
+			$div.appendTo($("#IEcontrols"));
 		}
-		$("<div />",{"id":"image_editor_shape_controls"}).appendTo($("#image_editor_container"));
+		$("<div />",{"id":"IEshape_controls"}).appendTo($("#IEcontainer"));
 		for(var i in shape_controls){
-			var $div = $('<div />',{'class':'image_editor_control_icons '+i,'data-control-type':i})
+			var $div = $('<div />',{'class':'IEcontrol_icons '+i,'data-control-type':i})
 			$div.append($('<i />',{'class':'fa '+shape_controls[i],'aria-hidden':true}));
 			if(i == 'double sided arrow'){
 				$div.append($('<span />',{'style':'font-size:10px;'}).text(i.toUpperCase()));
 			} else {
 				$div.append($('<span />').text(i.toUpperCase()));
 			}
-			$div.appendTo($("#image_editor_shape_controls"));
+			$div.appendTo($("#IEshape_controls"));
 		}
-		$("#image_editor_controls div").bind("click",function(){
+		$("#IEcontrols div").bind("click",function(){
+			if($(this).hasClass("active"))
+				return false;
 			var control_type = $(this).attr('data-control-type');
 			$(".canvas-container").show();
-			$("#image_editor_crop_image_ops, #image_editor_measure_image_ops").hide();
+			$("#IEcrop_image_ops, #IEmeasure_image_ops").hide();
 			removeJcrop();
-			$("#image_editor_coords_div").hide();
-			$("#image_editor_points, #image_editor_measure_image").val('');
-			$("#image_editor_measure_image_ops > *").not("textarea").remove();
-			$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+			$("#IEcoords_div").hide();
+			$("#IEpoints, #IEmeasure_image").val('');
+			$("#IEmeasure_image_ops > *").not("textarea").remove();
+			$("#IEmeasure_image_ops textarea").removeAttr("data-image-url");
 			switch(control_type){
 				case 'text':
 					addText();
 					break;
 				case 'shape':
-					$("#image_editor_shape_controls").addClass("active");
+					$("#IEshape_controls").addClass("active");
 					break;
 				case 'crop':
 					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
-					// $("#image_editor_crop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					// $("#IEcrop_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
 					var widt = canvas.width*settings.curScale;
 					var heig = canvas.height*settings.curScale;
 					var le = widt/2;
 					var to = heig/2;
-					$("#image_editor_crop_image_ops").css({'left':'calc(50% - '+le+'px)','top':'calc(50% - '+to+'px)'});
-					$("#image_editor_crop_image_ops").css({width:widt,height:heig});
+					$("#IEcrop_image_ops").css({'left':'calc(50% - '+le+'px)','top':'calc(50% - '+to+'px)'});
+					$("#IEcrop_image_ops").css({width:widt,height:heig});
 					$(".canvas-container").hide();
-					$("#image_editor_crop_image_ops").show();
-					$('#image_editor_image_el').css({width:widt,height:heig});
-					$('#image_editor_image_el').attr("src",croppedImage);
-					$('#image_editor_image_el').Jcrop({
+					$("#IEcrop_image_ops").show();
+					$('#IEimage_el').css({width:widt,height:heig});
+					$('#IEimage_el').attr("src",croppedImage);
+					$('#IEimage_el').Jcrop({
 						onSelect : updateCoords,
 						bgColor : ''
 					});
 					initCrop();
 					break;
 				case 'measure':
+					measured_scale = 1;
+					isCleaned = false;
+					$("#IEratio, #IEreal_distance, #IEarea, #IEcalculated_distance").val('');
 					canvas.discardActiveObject();
 					croppedImage = canvas.toDataURL();
-					// $("#image_editor_measure_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
-					$("#image_editor_measure_image_ops").css({width:canvas.width,height:canvas.height});
+					// $("#IEmeasure_image_ops").css({width:$(".canvas-container").width(),height:$(".canvas-container").height(),left:$(".canvas-container").css("left")});
+					$("#IEmeasure_image_ops").css({width:canvas.width,height:canvas.height});
 					$(".canvas-container").hide();
-					$("#image_editor_measure_image_ops").show();
+					$("#IEmeasure_image_ops").show();
 					// croppedImage = 'http://farm8.staticflickr.com/7259/6956772778_2fa755a228.jpg';
 					var img = new Image();
 					img.onload = function(){
-						$("#image_editor_measure_popup").addClass("active");
-						$('#image_editor_measure_image').attr("data-image-url",img.src);
-						$("#image_editor_measure_image").addClass("canvas-area");
-						$('.canvas-area[data-image-url]').canvasAreaDraw();
+						$("#IEmeasure_popup").addClass("active");
+						$('#IEmeasure_image').attr("data-image-url",img.src);
+						$("#IEmeasure_image").addClass("canvas-area");
+						$('.canvas-area[data-image-url]').canvasAreaDraw({
+							onClick : function(e){
+								// var point = e.offsetX+','+e.offsetY;
+								var points = $('.canvas-area[data-image-url]').data("points");
+								var set = vertex(points);
+								$('#IEcalculated_distance').val(totalDistance(set).toFixed(2));
+								$('#IEarea').val(calculateArea(set).toFixed(2));
+							}
+						});
+						hideLoading();
 					}
+					showLoading();
 					img.src = croppedImage;
 					break;
 				case 'save':
@@ -146,8 +163,13 @@ var canvas, selectedObj, settings, coords, filename;
 					anchor_el.click();
 					break;
 			}
+			if(control_type == 'crop' || control_type == 'measure'){
+				$(this).addClass("active");
+			} else {
+				$('#IEcontrols div').removeClass("active");
+			}
 		});
-		$("#image_editor_shape_controls div").bind("click",function(){
+		$("#IEshape_controls div").bind("click",function(){
 			var shape_control_type = $(this).attr('data-control-type');
 			switch(shape_control_type){
 				case 'arrow':
@@ -166,38 +188,69 @@ var canvas, selectedObj, settings, coords, filename;
 					addCircle();
 					break;
 			}
-			$("#image_editor_shape_controls").removeClass("active");
+			$("#IEshape_controls").removeClass("active");
 		})
-		$("<canvas />",{"id":"image_editor_canvas"}).appendTo($("#image_editor_container"));
-		$('<div id="image_editor_crop_image_ops"><img id="image_editor_image_el" /></div>').appendTo($("#image_editor_container"));
-		$('<div id="image_editor_measure_image_ops"><textarea id="image_editor_measure_image"></textarea></div>').appendTo($("#image_editor_container"));
-		$('<div id="image_editor_coords_div"><div><textarea id="image_editor_points"></textarea><i></i></div></div>').appendTo($("#image_editor_container"));
-		$("<div />",{"id":"image_editor_settings"}).appendTo($("#image_editor_container"));
-		$("#image_editor_settings").append($("<input type='range' id='image_editor_scale' class='range-slider__range' min='0.1' step='0.01' />"))
-		$("#image_editor_settings").append($("<div id='image_editor_close_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
-		$("<div />",{"id":"image_editor_measure_popup"}).appendTo($("#image_editor_container"));
+		$("<canvas />",{"id":"IEcanvas"}).appendTo($("#IEcontainer"));
+		$('<div id="IEcrop_image_ops"><img id="IEimage_el" /></div>').appendTo($("#IEcontainer"));
+		$('<div id="IEmeasure_image_ops"><textarea id="IEmeasure_image"></textarea></div>').appendTo($("#IEcontainer"));
+		$('<div id="IEcoords_div"><div><textarea id="IEpoints"></textarea><i></i></div></div>').appendTo($("#IEcontainer"));
+		$("<div />",{"id":"IEsettings"}).appendTo($("#IEcontainer"));
+		$("#IEsettings").append($("<input type='range' id='IEscale' class='range-slider__range' min='0.1' step='0.01' />"))
+		$("#IEsettings").append($("<div id='IEclose_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
+		$("<div />",{"id":"IEmeasure_popup"}).appendTo($("#IEcontainer"));
+		$("#IEcontainer").append($("<div />",{"id":"IEloader"}));
+		$("#IEloader").append($('<i />'));
 		var measure_props = ["Real Distance","Ratio", "Calculated Area", "Calculated Distance"];
-		var $div = $('<div />',{'class':'image_editor_measure_popup_head'});
+		var $div = $('<div />',{'class':'IEmeasure_popup_head'});
 		$div.append($('<span />').text('Measure properties'));
-		$("#image_editor_measure_popup").append($div);
+		$("#IEmeasure_popup").append($div);
 		measure_props.forEach(function(a){
-			var $div = $('<div />',{'class':'image_editor_measure_popup_opts'});
+			var $div = $('<div />',{'class':'IEmeasure_popup_opts'});
 			$div.append($('<span />').text(a));
-			$div.append($('<input />',{'type':'text','data-measure_prop':a}));
-			$("#image_editor_measure_popup").append($div);
+			var id = '';
+			var isDisabled = false;
+			switch(a){
+				case 'Real Distance':
+					id = 'IEreal_distance';
+					break;
+				case 'Ratio':
+					id = 'IEratio';
+					isDisabled = true;
+					break;
+				case 'Calculated Area':
+					id = 'IEarea';
+					isDisabled = true;
+					break;
+				case 'Calculated Distance':
+					id = 'IEcalculated_distance';
+					isDisabled = true;
+					break;
+			}
+			$div.append($('<input />',{'type':'text','data-measure_prop':a,'id':id,'disabled':isDisabled}));
+			$("#IEmeasure_popup").append($div);
 		})
-		var $div = $('<div />',{'class':'image_editor_measure_popup_opts'});
-		$div.append($('<button />',{'type':'button','class':'image_editor_clear_measure'}).text("Clear"));
-		$div.append($('<button />',{'type':'button','class':'image_editor_close_measure'}).text("Close"));
-		$("#image_editor_measure_popup").append($div);
-		$("#image_editor_measure_popup").css("transform","translate3d(20px,"+(innerHeight-270)+"px,0)");
+		var $div = $('<div />',{'class':'IEmeasure_popup_opts'});
+		$div.append($('<button />',{'type':'button','class':'IEclear_measure'}).text("Clear"));
+		$div.append($('<button />',{'type':'button','class':'IEclose_measure'}).text("Close"));
+		$("#IEmeasure_popup").append($div);
+		$("#IEmeasure_popup").css("transform","translate3d(20px,"+(innerHeight-270)+"px,0)");
 		if(options.show_props){
-			$("<div />",{"id":"image_editor_properties_dialogs"}).appendTo($("#image_editor_container"));
+			$("<div />",{"id":"IEproperties_dialogs"}).appendTo($("#IEcontainer"));
 		}
-		$("#image_editor_close_icon").bind("click",function(){
+		$("#IEreal_distance").bind("input",function(){
+			if(!isCleaned){
+				var real_dis = parseFloat($("#IEreal_distance").val()) || 0;
+				var calc_dis = parseFloat($("#IEcalculated_distance").val());
+				if(calc_dis > 0){
+					measured_scale = parseFloat(real_dis/calc_dis);
+					$("#IEratio").val(measured_scale);
+				}
+			}
+		})
+		$("#IEclose_icon").bind("click",function(){
 			closeEditor();
 		});
-		$("#image_editor_scale").on("input",function(){
+		$("#IEscale").on("input",function(){
 			var scale = $(this).val();
 			var transform = $(".canvas-container")[0].style.transform;
 			var translate = "";
@@ -212,11 +265,11 @@ var canvas, selectedObj, settings, coords, filename;
 			}
 			if(!$(this).data("isChangedProg")){
 				if(scale > settings.curScale){
-					$(".canvas-container, #image_editor_measure_image_ops").addClass("image_editor_move_cursor");
+					$(".canvas-container, #IEmeasure_image_ops").addClass("IEmove_cursor");
 				} else {
-					$(".canvas-container, #image_editor_measure_image_ops").removeClass("image_editor_move_cursor");
+					$(".canvas-container, #IEmeasure_image_ops").removeClass("IEmove_cursor");
 				}
-				$(".canvas-container, #image_editor_measure_image_ops").css("transform","translate3d("+st_left+"px,"+st_top+"px,0px) scale("+scale+")");
+				$(".canvas-container, #IEmeasure_image_ops").css("transform","translate3d("+st_left+"px,"+st_top+"px,0px) scale("+scale+")");
 			}
 		});
 		$("body").bind("keydown",function(e){
@@ -233,7 +286,7 @@ var canvas, selectedObj, settings, coords, filename;
 					eventHandler(e);
 			}
 		});
-		$("#image_editor_coords_div i").bind("click",function(){
+		$("#IEcoords_div i").bind("click",function(){
 			closeMeasure();
 		})
 		initSettings();
@@ -241,6 +294,9 @@ var canvas, selectedObj, settings, coords, filename;
 
 	var init = function(index, element, options){
 		$(element).bind("click",function(){
+			isCleaned = false;
+			measured_scale = 1;
+			$("#IEreal_distance, #IEarea, #IEcalculated_distance").val('');
 			var src = $(this).attr("src");
 			if(src.indexOf('data:') == 0){
 				filename = 'image_'+(Date.now()%10000).toString();
@@ -262,8 +318,8 @@ var canvas, selectedObj, settings, coords, filename;
 					var canvasHeight = Math.min(imgHeight,settings.contHeight);
 					canvasWidth = imgWidth;
 					canvasHeight = imgHeight;
-					$("#image_editor_canvas").attr({Width:canvasWidth,Height:canvasHeight});
-					canvas = new fabric.Canvas('image_editor_canvas');
+					$("#IEcanvas").attr({Width:canvasWidth,Height:canvasHeight});
+					canvas = new fabric.Canvas('IEcanvas');
 					canvas.on("object:scaling",function(obj){
 						var target = obj.target;
 						if(target.type == 'i-text'){
@@ -276,12 +332,12 @@ var canvas, selectedObj, settings, coords, filename;
 					canvas.on("object:selected",function(event){
 						selectedObj = canvas.getActiveObject();
 						if(selectedObj){
-							$("#image_editor_properties_dialogs").show();
+							$("#IEproperties_dialogs").show();
 							// selectedObj.bringToFront();
 							showProperties();
 							setProperties();
 						} else {
-							$("#image_editor_properties_dialogs").hide();
+							$("#IEproperties_dialogs").hide();
 						}
 					});
 					canvas.on("selection:cleared",function(e){
@@ -293,6 +349,7 @@ var canvas, selectedObj, settings, coords, filename;
 						}
 					})
 					setPositionsOfInnerElements();
+					showLoading();
 					getBase64(img.src,function(src){
 						fabric.Image.fromURL(src,function(nimg){
 							nimg.selectable = false;
@@ -306,28 +363,29 @@ var canvas, selectedObj, settings, coords, filename;
 									settings.curScale = settings.contWidth/settings.imgWidth;
 								}
 								// nimg.scale(currentScale);
-								$(".canvas-container, #image_editor_measure_image_ops").css("transform","scale("+settings.curScale+")");
+								$(".canvas-container, #IEmeasure_image_ops").css("transform","scale("+settings.curScale+")");
 								// $(".canvas-container").css("transform","scale(1)");
 							}
 			            	canvas.add(nimg);
 			                canvas.centerObject(nimg);
 						    nimg.setCoords();
 						    canvas.renderAll();
+						    hideLoading();
 						    setTimeout(function(){
 						    	resetScaleLimit();
 						    },1000);
 			            });
 			            resetScaleLimit();
 					});
-		            $(".canvas-container, #image_editor_measure_image_ops").bind("mousewheel",function(e){
+		            $(".canvas-container, #IEmeasure_image_ops").bind("mousewheel",function(e){
 						var delta = e.originalEvent.wheelDelta/120;
-						var curScale = parseFloat($("#image_editor_scale").val());
+						var curScale = parseFloat($("#IEscale").val());
 						if(delta > 0){
 							curScale -= 0.01;
 						} else if(delta < 0){
 							curScale += 0.01;
 						}
-						$("#image_editor_scale").val(curScale).trigger("input");
+						$("#IEscale").val(curScale).trigger("input");
 						eventHandler(e);
 						return false;
 					})
@@ -335,11 +393,13 @@ var canvas, selectedObj, settings, coords, filename;
 		            // 	var currentScale = (settings.contWidth/imgWidth).toFixed(2);
 		            // 	$(".canvas-container").css("transform","scale("+currentScale+")");
 		            // }
+		            hideLoading();
 				}
+				showLoading();
 				img.crossOrigin = 'Anonymous';
 				img.src = src;
 			}
-			$("#image_editor_container").addClass("active");
+			$("#IEcontainer").addClass("active");
 		});
 		var options = $.extend(settings,options);
 		$(element).data("ImageEdit",options);
@@ -351,8 +411,8 @@ var canvas, selectedObj, settings, coords, filename;
 	var setPositionsOfInnerElements = function(){
 		var containerWidth = $(".canvas-container").width()/2;
 		var containerHeight = $(".canvas-container").height()/2;
-        $(".canvas-container, #image_editor_measure_image_ops").css("left","calc(50% - "+containerWidth+"px)");
-        $(".canvas-container, #image_editor_measure_image_ops").css("top","calc(50% - "+containerHeight+"px)");
+        $(".canvas-container, #IEmeasure_image_ops").css("left","calc(50% - "+containerWidth+"px)");
+        $(".canvas-container, #IEmeasure_image_ops").css("top","calc(50% - "+containerHeight+"px)");
 	}
 	var resetScaleLimit = function(){
 		settings.contWidth = innerWidth*0.8;
@@ -365,13 +425,13 @@ var canvas, selectedObj, settings, coords, filename;
 		if(settings.curScale > 1){
 			settings.curScale = 1;
 		}
-        $("#image_editor_scale").data("isChangedProg",true);
-        $("#image_editor_scale").attr("max",settings.maxScale);
-        $("#image_editor_scale").val(settings.curScale);
-        $(".canvas-container, #image_editor_measure_image_ops").css("transform","scale("+settings.curScale+")");
-        $("#image_editor_scale").data("isChangedProg","");
-        $(".canvas-container, #image_editor_measure_image_ops").unbind("mousedown");
-        $(".canvas-container, #image_editor_measure_image_ops").bind("mousedown",function(event){
+        $("#IEscale").data("isChangedProg",true);
+        $("#IEscale").attr("max",settings.maxScale);
+        $("#IEscale").val(settings.curScale);
+        $(".canvas-container, #IEmeasure_image_ops").css("transform","scale("+settings.curScale+")");
+        $("#IEscale").data("isChangedProg","");
+        $(".canvas-container, #IEmeasure_image_ops").unbind("mousedown");
+        $(".canvas-container, #IEmeasure_image_ops").bind("mousedown",function(event){
 			var clientX = event.pageX;
 			var clientY = event.pageY;
 			var transform = $(".canvas-container")[0].style.transform;
@@ -388,15 +448,15 @@ var canvas, selectedObj, settings, coords, filename;
 					st_top = parseInt(translateInfo[1].replace(/[\spx]/g,''));
 				}
 			}
-			$("#image_editor_container").bind("mousemove",function(e){
+			$("#IEcontainer").bind("mousemove",function(e){
 				if(e.shiftKey){
 					var left = e.pageX-clientX+st_left;
 					var top = e.pageY-clientY+st_top;
-					$(".canvas-container, #image_editor_measure_image_ops").css("transform",'translate3d('+left+'px,'+top+'px,0px) '+scale+'');
+					$(".canvas-container, #IEmeasure_image_ops").css("transform",'translate3d('+left+'px,'+top+'px,0px) '+scale+'');
 				}
 			});
-			$("#image_editor_container").bind("mouseup",function(){
-				$("#image_editor_container").unbind("mousemove mouseup");
+			$("#IEcontainer").bind("mouseup",function(){
+				$("#IEcontainer").unbind("mousemove mouseup");
 			})
 		})
 	}
@@ -420,32 +480,36 @@ var canvas, selectedObj, settings, coords, filename;
 					$("*").bind("mousemove",function(e){
 						var left = e.pageX-clientX;
 						var top = e.pageY-clientY;
-						$("#image_editor_properties_dialogs").css('transform','translate3d('+left+'px,'+top+'px,0px)');
+						$("#IEproperties_dialogs").css('transform','translate3d('+left+'px,'+top+'px,0px)');
 					});
 					$("*").bind("mouseup",function(){
 						$("*").unbind("mousemove mouseup");
 					})
 				})
-				$("#image_editor_measure_popup .image_editor_measure_popup_head").bind("mousedown",function(event){
+				$("#IEmeasure_popup .IEmeasure_popup_head").bind("mousedown",function(event){
 					var clientX = event.offsetX;
 					var clientY = event.offsetY;
-					$("#image_editor_container").bind("mousemove",function(e){
+					$("#IEcontainer").bind("mousemove",function(e){
 						var left = e.pageX-clientX;
 						var top = e.pageY-clientY;
-						$("#image_editor_measure_popup").css('transform','translate3d('+left+'px,'+top+'px,0px)');
+						$("#IEmeasure_popup").css('transform','translate3d('+left+'px,'+top+'px,0px)');
 					});
-					$("#image_editor_container").bind("mouseup",function(){
-						$("#image_editor_container").unbind("mousemove mouseup");
+					$("#IEcontainer").bind("mouseup",function(){
+						$("#IEcontainer").unbind("mousemove mouseup");
 					})
 				})
-				$(".image_editor_clear_measure").bind("click",function(){
-					$("#image_editor_measure_image").data("points",[]);
-					var draw = $("#image_editor_measure_image").data("draw");
-					if(typeof draw == 'function'){
-						draw([]);
+				$(".IEclear_measure").bind("click",function(){
+					isCleaned = true;
+					$("#IEreal_distance").val('');
+					$("#IEarea").val('');
+					$("#IEcalculated_distance").val('');
+					$("#IEmeasure_image").data("points",[]);
+					var reset = $("#IEmeasure_image").data("reset");
+					if(typeof reset == 'function'){
+						reset();
 					}
 				})
-				$(".image_editor_close_measure").bind("click",function(){
+				$(".IEclose_measure").bind("click",function(){
 					closeMeasure();
 				})
 				$(".prop_body input").bind("input",function(){
@@ -508,7 +572,7 @@ var canvas, selectedObj, settings, coords, filename;
 	}
 	var closeEditor = function(){
 		canvas.dispose();
-		$("#image_editor_container").removeClass("active");
+		$("#IEcontainer").removeClass("active");
 		closeMeasure();
 	}
 	var addText = function(){
@@ -571,8 +635,8 @@ var canvas, selectedObj, settings, coords, filename;
 			}
 			mainPropEl.append(parentEl);
 		}
-		$("#image_editor_properties_dialogs").append('<div id="prop_head"><span>Properties</span><input type="search" id="search_el" placeholder="Search properties" /></div>');
-		$("#image_editor_properties_dialogs").append(mainPropEl);
+		$("#IEproperties_dialogs").append('<div id="prop_head"><span>Properties</span><input type="search" id="search_el" placeholder="Search properties" /></div>');
+		$("#IEproperties_dialogs").append(mainPropEl);
 		setTimeout(function(){
 			if(typeof callback == 'function'){
 				callback();
@@ -619,7 +683,7 @@ var canvas, selectedObj, settings, coords, filename;
 				$(this).val(selectedVal);
 			}
 		})
-		$("#image_editor_properties_dialogs").css("transform","translate3d("+(innerWidth-220)+"px,60px,0)");
+		$("#IEproperties_dialogs").css("transform","translate3d("+(innerWidth-220)+"px,60px,0)");
 	}
 
 	var loadFonts = function(callback){
@@ -645,8 +709,9 @@ var canvas, selectedObj, settings, coords, filename;
 		close_icon.bind("click",function(){
 			removeJcrop();
 			$(".canvas-container").show();
-			$("#image_editor_crop_image_ops").hide();
-			$("#image_editor_scale").show();
+			$("#IEcrop_image_ops").hide();
+			$("#IEscale").show();
+			$('#IEcontrols div').removeClass("active");
 		});
 		tick_icon.bind("click",function(){
 			var can = document.createElement('canvas');
@@ -673,7 +738,7 @@ var canvas, selectedObj, settings, coords, filename;
 				temp_cxt.putImageData(data,0,0);
 				var croppedSrc = temp_can.toDataURL();
 				$(".canvas-container").show();
-				$("#image_editor_crop_image_ops").hide();
+				$("#IEcrop_image_ops").hide();
 				// canvas.clear();
 				fabric.Image.fromURL(croppedSrc,function(nimg){
 					canvas.clear();
@@ -691,27 +756,30 @@ var canvas, selectedObj, settings, coords, filename;
 						setPositionsOfInnerElements();
 			            removeJcrop();
 					},300);
+					$('#IEcontrols div').removeClass("active");
 					// canvas.add(nimg);
 					// canvas.centerObject(nimg);
 					// nimg.setCoords();
 					// canvas.setActiveObject(nimg);
 					// canvas.renderAll();
 	            })
+	            hideLoading();
 			}
+			showLoading();
 			// img.crossOrigin = 'Anonymous';
 			img.src = croppedImage;
 		});
-		$("#image_editor_scale").hide();
+		$("#IEscale").hide();
 	}
 
 	var removeJcrop = function(){
-		var jcrop_obj = $('#image_editor_image_el').data('Jcrop');
+		var jcrop_obj = $('#IEimage_el').data('Jcrop');
 		if(jcrop_obj)
 			jcrop_obj.destroy();
-		$("#image_editor_crop_image_ops, #image_editor_image_el").removeAttr("style");
-		$("#image_editor_image_el").removeAttr("src");
+		$("#IEcrop_image_ops, #IEimage_el").removeAttr("style");
+		$("#IEimage_el").removeAttr("src");
 		resetScaleLimit();
-		$("#image_editor_scale").show();
+		$("#IEscale").show();
 	}
 
 	var updateCoords = function(e){
@@ -724,13 +792,63 @@ var canvas, selectedObj, settings, coords, filename;
 	}
 
 	var closeMeasure = function(){
-		$("#image_editor_measure_popup").removeClass("active");
-		$("#image_editor_coords_div").hide();
-		$("#image_editor_measure_image_ops").hide();
+		$('#IEcontrols div').removeClass("active");
+		$("#IEmeasure_popup").removeClass("active");
+		$("#IEcoords_div").hide();
+		$("#IEmeasure_image_ops").hide();
 		$(".canvas-container").show();
-		$("#image_editor_measure_image_ops > *").not("textarea").remove();
-		$("#image_editor_measure_image_ops textarea").removeAttr("data-image-url");
+		$("#IEmeasure_image_ops > *").not("textarea").remove();
+		$("#IEmeasure_image_ops textarea").removeAttr("data-image-url");
 	}
+	/*Measure methods*/
+
+	var vertex = function(group) {
+		var pairArray = [];
+		for (var i = 0; i < group.length; i++) {
+			var pair = { x: parseInt(group[i]), y: parseInt(group[i + 1]) }
+			pairArray.push(pair);
+			i++;
+		}
+		return pairArray;
+	}
+
+	var totalDistance = function(vertices) {
+		var total = 0;
+		for (var i = 0; i < vertices.length - 1; i++) {
+			var x1 = vertices[i + 1].x;
+			var x2 = vertices[i].x;
+			var y1 = vertices[i + 1].y;
+			var y2 = vertices[i].y;
+			total += distance(x1, y1, x2, y2);
+		}
+		/*	distance between first and last vertex */
+		if(vertices.length > 2){
+			var x1 = vertices[vertices.length - 1].x;
+			var x2 = vertices[0].x;
+			var y1 = vertices[vertices.length - 1].y;
+			var y2 = vertices[0].y;
+			total += distance(x1, y1, x2, y2);
+		}
+		return total;
+	}
+
+	var calculateArea = function(vertices) {
+		var area = 0;
+		var j = vertices.length - 1;
+		for (var i = 0; i < vertices.length; i++) {
+			area += ((vertices[j].x + vertices[i].x) * measured_scale) * ((vertices[j].y - vertices[i].y) * measured_scale);
+			j = i;
+		}
+		return Math.abs(area / 2);
+	}
+
+	var distance = function (x1, y1, x2, y2) {
+		var a = (x1 - x2) * measured_scale;
+		var b = (y1 - y2) * measured_scale;
+		var currentDistance = Math.sqrt(a * a + b * b);
+		return currentDistance;
+	}
+
 	/*shapes*/
 
 	var addArrow = function(){
@@ -803,8 +921,10 @@ var canvas, selectedObj, settings, coords, filename;
 			can.height = img.naturalHeight;
 			var cxt = can.getContext('2d');
 			cxt.drawImage(img,0,0);
+			hideLoading();
 			callback(can.toDataURL());
 		}
+		showLoading();
 		img.crossOrigin = 'Anonymous';
 		img.src = remote_src;
 	}
@@ -836,6 +956,13 @@ var canvas, selectedObj, settings, coords, filename;
 	      }
 	   }
 	   return "";
+	}
+
+	var showLoading = function(){
+		$("#IEloader").addClass("active");
+	}
+	var hideLoading = function(){
+		$("#IEloader").removeClass("active");
 	}
 	$(_window).on("resize",resetSize);
 })(jQuery, window);
