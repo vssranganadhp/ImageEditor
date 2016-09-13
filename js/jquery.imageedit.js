@@ -447,7 +447,7 @@
 		            // 	var currentScale = (settings.contWidth/imgWidth).toFixed(2);
 		            // 	$(".canvas-container").css("transform","scale("+currentScale+")");
 		            // }
-		            hideLoading();
+		            // hideLoading();
 				}
 				showLoading();
 				img.crossOrigin = 'Anonymous';
@@ -829,13 +829,13 @@
 			            removeJcrop();
 					},300);
 					$('#IEcontrols div').removeClass("active");
+		            hideLoading();
 					// canvas.add(nimg);
 					// canvas.centerObject(nimg);
 					// nimg.setCoords();
 					// canvas.setActiveObject(nimg);
 					// canvas.renderAll();
 	            })
-	            hideLoading();
 			}
 			showLoading();
 			// img.crossOrigin = 'Anonymous';
