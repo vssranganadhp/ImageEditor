@@ -5,10 +5,14 @@
 
 ```js
 $("img").imageEdit({
-  minScale : 1,
-  maxScale : 2
 }); // all img elements are initialized by the plugin
+
+$("img").imageEdit("show");
 ```
+## Options
+
+* **onReady**   *triggers when image is loaded*
+* **onSave**    *returns when save button is clicked, returns base64 data of image*
 
 ## Dependencies
  1. Fabric.js ( https://github.com/kangax/fabric.js/ )
