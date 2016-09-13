@@ -34,7 +34,7 @@
 .jcrop-holder img,img.jcrop-preview{max-width:none;}
 /* jquery.imageedit.min.css v0.0.1*/
 *, *:before, *:after {box-sizing: border-box;}
-#IEcontainer *{-webkit-user-select:none;}
+/*#IEcontainer *{-webkit-user-select:none;}*/
 #IEcontainer{position:fixed;top:0px;left:0px;width:100%;height:100%;display:none;background:rgba(0,0,0,0.4);}
 #IEcontainer.active{display: block;}
 #IEcontrols{position:absolute;top:0px;left:30%;width:40%;height:65px;box-shadow: 0px 0px 3px;z-index:100000;}
@@ -92,6 +92,8 @@ span.crop_icon{width:30px;height:30px;background-size:30px;display: inline-block
 #IEmeasure_popup button:hover {box-shadow: none;}
 #IEmeasure_popup button:focus{outline:none;}
 /*.IEmove_cursor, .IEmove_cursor *{cursor: move !important;}*/
-#IEloader{width: 32px;height: 32px;background: #fff;transition-duration: 200ms;position: absolute;transform: translate3d(10px,-50px,0);}
-#IEloader.active{transform: translate3d(10px,10px,0);}
-#IEloader i{background:url('../images/loader.gif');width:32px;height:32px;display:inline-block;background-size: 32px;}
+/*preloader*/
+#IEloader{width:35px;height:35px;zoom:2;padding:0px;border-radius:100%;border:2px solid;border-top-color:rgba(0,0,0, 0.65);border-bottom-color:rgba(0,0,0, 0.15);border-left-color:rgba(0,0,0, 0.65);border-right-color:rgba(0,0,0, 0.15);-webkit-animation: preloader4 0.8s linear infinite;animation: preloader4 0.8s linear infinite;position: absolute;top: calc(50% - 18px);left: calc(50% - 18px);display:none;}
+#IEloader.active{display:inline-block;}
+@keyframes preloader4 {from {transform: rotate(0deg);}to {transform: rotate(360deg);}}
+@-webkit-keyframes preloader4 {from {-webkit-transform: rotate(0deg);}to {-webkit-transform: rotate(360deg);}}

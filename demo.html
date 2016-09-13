@@ -13,7 +13,16 @@
 	<script type="text/javascript" src="js/jquery.imageedit.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function(){
-			$("img").imageEdit({maxScale:8});
+			$("img").imageEdit({
+				minScale:4,
+				maxScale:8,
+				onReady:function(){
+					console.log("image loaded");
+				},
+				onSave : function(src){
+					console.log(src.length);
+				}
+			});
 		})
 	</script>
 </head>

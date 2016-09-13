@@ -1,15 +1,18 @@
-var canvas, selectedObj, settings, coords, filename;
 (function($, _window){
+	var canvas, selectedObj, settings, coords, filename;
 	settings = {
 		contWidth : 0,
 		contHeight : 0,
 		minScale : 0.3,
 		maxScale : 1,
-		defaultColor : 'red'
+		color : 'red',
+		font : 'Helvetica',
+		text : 'Enter text here'
 	};
 	coords = {};
 	var measured_scale = 1;
 	var isCleaned = false;
+	var method, selector;
 	var SVG_START = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="{X}px" y="{Y}px" width="{W}px" height="{H}px">'
 	var SVG_END = '</svg>';
 	var RECT = '<rect x="{X}" y="{Y}" fill="{FILL}" stroke="{S}" stroke-width="{SW}" width="{W}" height="{H}"></rect>';
@@ -67,7 +70,17 @@ var canvas, selectedObj, settings, coords, filename;
 	var shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
 	// var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
+		selector = this;
+		if(!$(selector).is("img")){
+			console.error("This plugin works for images only!");
+			return false;
+		}
+		if(typeof options != 'object'){
+			method = options;
+			options = {};
+		}
 		this.each(function(index, element){
+			destructor.apply(element, [index, element, options]);
 			init.apply(element, [index, element, options]);
 		});
 		$("<div />",{"id":"IEcontainer"}).appendTo($("body"));
@@ -145,7 +158,7 @@ var canvas, selectedObj, settings, coords, filename;
 						$('#IEmeasure_image').attr("data-image-url",img.src);
 						$("#IEmeasure_image").addClass("canvas-area");
 						$('.canvas-area[data-image-url]').canvasAreaDraw({
-							onClick : function(e){
+							_resetPoint : function(e){
 								// var point = e.offsetX+','+e.offsetY;
 								var points = $('.canvas-area[data-image-url]').data("points");
 								var set = vertex(points);
@@ -160,8 +173,12 @@ var canvas, selectedObj, settings, coords, filename;
 					break;
 				case 'save':
 					var src = canvas.toDataURL();
-					var anchor_el = $('<a />',{'href':src,'download':filename+'.png'})[0];
-					anchor_el.click();
+					if(typeof settings.onSave == 'function'){
+						settings.onSave(src);
+					} else {
+						var anchor_el = $('<a />',{'href':src,'download':filename+'.png'})[0];
+						anchor_el.click();
+					}
 					break;
 			}
 			if(control_type == 'crop' || control_type == 'measure'){
@@ -200,7 +217,8 @@ var canvas, selectedObj, settings, coords, filename;
 		$("#IEsettings").append($("<div id='IEclose_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
 		$("<div />",{"id":"IEmeasure_popup"}).appendTo($("#IEcontainer"));
 		$("#IEcontainer").append($("<div />",{"id":"IEloader"}));
-		$("#IEloader").append($('<i />'));
+		// $("#IEloader").append($('<i />'));
+		// $("#IEloader").html('<div class="blockG" id="rotateG_01"></div><div class="blockG" id="rotateG_02"></div><div class="blockG" id="rotateG_03"></div><div class="blockG" id="rotateG_04"></div><div class="blockG" id="rotateG_05"></div><div class="blockG" id="rotateG_06"></div><div class="blockG" id="rotateG_07"></div><div class="blockG" id="rotateG_08"></div>');
 		var measure_props = ["Real Distance","Ratio", "Calculated Area", "Calculated Distance"];
 		var $div = $('<div />',{'class':'IEmeasure_popup_head'});
 		$div.append($('<span />').text('Measure properties'));
@@ -290,13 +308,49 @@ var canvas, selectedObj, settings, coords, filename;
 		$("#IEcoords_div i").bind("click",function(){
 			closeMeasure();
 		})
-		initSettings();
+		initSettings(function(){
+			if(method){
+				if(selector.length > 1){
+					console.error("Mathcing selectors are more than one.");
+					return false;
+				}
+				switch(method){
+					case 'show':
+						selector.trigger('click');
+						break;
+					case 'hide':
+						closeEditor();
+						break;
+					case 'measure':
+						selector.trigger('click');
+						settings.onReady = function(){
+							$(".IEcontrol_icons.measure").click();
+						}
+						break;
+					case 'crop':
+						selector.trigger('click');
+						settings.onReady = function(){
+							$(".IEcontrol_icons.crop").click();
+						}
+						break;
+					case 'save':
+						selector.trigger('click');
+						settings.onReady = function(){
+							$(".IEcontrol_icons.save").click();
+						}
+						break;
+				}
+			}
+		});
 	}
 
 	var init = function(index, element, options){
-		$(element).bind("click",function(){
+		$(element).bind("click",function(e){
 			isCleaned = false;
 			measured_scale = 1;
+			if(options.onClick == 'function'){
+				options.onClick(e);
+			}
 			$("#IEreal_distance, #IEarea, #IEcalculated_distance").val('');
 			var src = $(this).attr("src");
 			if(src.indexOf('data:') == 0){
@@ -372,9 +426,8 @@ var canvas, selectedObj, settings, coords, filename;
 						    nimg.setCoords();
 						    canvas.renderAll();
 						    hideLoading();
-						    setTimeout(function(){
-						    	resetScaleLimit();
-						    },1000);
+						    if(settings.onReady == 'function')
+							    settings.onReady();
 			            });
 			            resetScaleLimit();
 					});
@@ -406,6 +459,16 @@ var canvas, selectedObj, settings, coords, filename;
 		$(element).data("ImageEdit",options);
 		$(element).attr("crossOrigin","Anonymous");
 	}
+
+	var destructor = function(index, element, options){
+		if($(element).data("ImageEdit")){
+			$("#IEcontainer").remove();
+			$(element).removeData('ImageEdit');
+			$(element).unbind('click');
+			$(element).removeAttr("crossOrigin");
+		}
+	}
+
 	var resetSize = function(){
 		resetScaleLimit();
 	}
@@ -427,6 +490,11 @@ var canvas, selectedObj, settings, coords, filename;
 			settings.curScale = 1;
 		}
         $("#IEscale").data("isChangedProg",true);
+        if(settings.minScale > 1){
+        	console.error("minScale property should be less than or equal to 1.");
+        	settings.minScale = settings.curScale.toFixed(2);
+        }
+        $("#IEscale").attr("min",settings.minScale);
         $("#IEscale").attr("max",settings.maxScale);
         $("#IEscale").val(settings.curScale);
         $(".canvas-container, #IEmeasure_image_ops").css("transform","scale("+settings.curScale+")");
@@ -461,78 +529,81 @@ var canvas, selectedObj, settings, coords, filename;
 			})
 		})
 	}
-	var initSettings = function(){
-		resetSize();
-		loadFonts(function(){
-			createPropertyDialogs(function(){
-				$("#search_el").bind("input",function(){
-					var q = $(this).val();
-					if(q == ""){
-						$(".searchable").show();
-					} else {
-						q = q.toLowerCase();
-						$(".searchable").hide();
-						$(".searchable[title*='"+q+"']").show();
-					}
+	var initSettings = function(callback){
+		// resetSize();
+		createPropertyDialogs(function(){
+			$("#search_el").bind("input",function(){
+				var q = $(this).val();
+				if(q == ""){
+					$(".searchable").show();
+				} else {
+					q = q.toLowerCase();
+					$(".searchable").hide();
+					$(".searchable[title*='"+q+"']").show();
+				}
+			})
+			$("#prop_head span").bind("mousedown",function(event){
+				var clientX = event.offsetX;
+				var clientY = event.offsetY;
+				$("*").bind("mousemove",function(e){
+					var left = e.pageX-clientX;
+					var top = e.pageY-clientY;
+					$("#IEproperties_dialogs").css('transform','translate3d('+left+'px,'+top+'px,0px)');
+				});
+				$("*").bind("mouseup",function(){
+					$("*").unbind("mousemove mouseup");
 				})
-				$("#prop_head span").bind("mousedown",function(event){
-					var clientX = event.offsetX;
-					var clientY = event.offsetY;
-					$("*").bind("mousemove",function(e){
-						var left = e.pageX-clientX;
-						var top = e.pageY-clientY;
-						$("#IEproperties_dialogs").css('transform','translate3d('+left+'px,'+top+'px,0px)');
-					});
-					$("*").bind("mouseup",function(){
-						$("*").unbind("mousemove mouseup");
-					})
+			})
+			$(".prop_body input").bind("input",function(){
+				var val = $(this).val();
+				var el_prop = $(this).attr('title');
+				if($(this).attr("type") == "number"){
+					val = parseFloat(val);
+				}
+				applyProp(el_prop, val);
+			})
+			$(".prop_body input[type='checkbox']").bind("change",function(){
+				var val = $(this).is(":checked");
+				var el_prop = $(this).attr('title');
+				applyProp(el_prop, val);
+			})
+			$(".prop_body select").bind("change",function(){
+				var val = $(this).val();
+				var el_prop = $(this).attr('title');
+				applyProp(el_prop, val);
+			})
+			// Measure bindings
+
+			$("#IEmeasure_popup .IEmeasure_popup_head").bind("mousedown",function(event){
+				var clientX = event.offsetX;
+				var clientY = event.offsetY;
+				$("#IEcontainer").bind("mousemove",function(e){
+					var left = e.pageX-clientX;
+					var top = e.pageY-clientY;
+					$("#IEmeasure_popup").css('transform','translate3d('+left+'px,'+top+'px,0px)');
+				});
+				$("#IEcontainer").bind("mouseup",function(){
+					$("#IEcontainer").unbind("mousemove mouseup");
 				})
-				$("#IEmeasure_popup .IEmeasure_popup_head").bind("mousedown",function(event){
-					var clientX = event.offsetX;
-					var clientY = event.offsetY;
-					$("#IEcontainer").bind("mousemove",function(e){
-						var left = e.pageX-clientX;
-						var top = e.pageY-clientY;
-						$("#IEmeasure_popup").css('transform','translate3d('+left+'px,'+top+'px,0px)');
-					});
-					$("#IEcontainer").bind("mouseup",function(){
-						$("#IEcontainer").unbind("mousemove mouseup");
-					})
-				})
-				$(".IEclear_measure").bind("click",function(){
-					isCleaned = true;
-					$("#IEreal_distance").val('');
-					$("#IEarea").val('');
-					$("#IEcalculated_distance").val('');
-					$("#IEmeasure_image").data("points",[]);
-					var reset = $("#IEmeasure_image").data("reset");
-					if(typeof reset == 'function'){
-						reset();
-					}
-				})
-				$(".IEclose_measure").bind("click",function(){
-					closeMeasure();
-				})
-				$(".prop_body input").bind("input",function(){
-					var val = $(this).val();
-					var el_prop = $(this).attr('title');
-					if($(this).attr("type") == "number"){
-						val = parseFloat(val);
-					}
-					applyProp(el_prop, val);
-				})
-				$(".prop_body input[type='checkbox']").bind("change",function(){
-					var val = $(this).is(":checked");
-					var el_prop = $(this).attr('title');
-					applyProp(el_prop, val);
-				})
-				$(".prop_body select").bind("change",function(){
-					var val = $(this).val();
-					var el_prop = $(this).attr('title');
-					applyProp(el_prop, val);
-				})
+			})
+			$(".IEclear_measure").bind("click",function(){
+				isCleaned = true;
+				$("#IEreal_distance").val('');
+				$("#IEarea").val('');
+				$("#IEcalculated_distance").val('');
+				$("#IEmeasure_image").data("points",[]);
+				var reset = $("#IEmeasure_image").data("reset");
+				if(typeof reset == 'function'){
+					reset();
+				}
+			})
+			$(".IEclose_measure").bind("click",function(){
+				closeMeasure();
 			});
-		})
+			if(typeof callback == 'function'){
+				callback();
+			}
+		});
 	}
 	var applyProp = function(el_prop, val){
 		if(selectedObj){
@@ -577,12 +648,12 @@ var canvas, selectedObj, settings, coords, filename;
 		closeMeasure();
 	}
 	var addText = function(){
-		var text = 'Enter Text Here';
+		var text = settings.text;
 	    var textSample = new fabric.IText(text, {
-			fontFamily: 'Helvetica',
+			fontFamily: settings.font,
 			angle: 0,
 			fontSize: 20,
-			fill: settings.defaultColor,
+			fill: settings.color,
 			hasRotatingPoint: true,
 			centerTransform: true,
 			editable : true
@@ -858,11 +929,11 @@ var canvas, selectedObj, settings, coords, filename;
 		var left = Math.round(obj.left);
 		var str = '';
 		str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
-		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
+		str += MARKER+''+LINE.replace('{X1}',2).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.color).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
 			objects.forEach(function(a){
-				a.fill = settings.defaultColor;
+				a.fill = settings.color;
 			})
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
 			makeCenterAndRedraw(loadedObject);
@@ -875,11 +946,11 @@ var canvas, selectedObj, settings, coords, filename;
 		var left = Math.round(obj.left);
 		var str = '';
 		str += SVG_START.replace('{X}','0').replace('{Y}','0').replace('{W}','50').replace('{H}','20');
-		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.defaultColor).replace('{SW}','5');
+		str += REVMARKER+''+LINE.replace('{X1}',10).replace('{X2}',45).replace('{Y1}',10).replace('{Y2}',10).replace('{S}',settings.color).replace('{SW}','5');
 		str += SVG_END;
 		fabric.loadSVGFromString(str,function(objects, options){
 			objects.forEach(function(a){
-				a.fill = settings.defaultColor;
+				a.fill = settings.color;
 			})
 			var loadedObject = fabric.util.groupSVGElements(objects, options);
 			makeCenterAndRedraw(loadedObject);
@@ -888,7 +959,7 @@ var canvas, selectedObj, settings, coords, filename;
 
 	var addLine = function(){
 		var lineObj = new fabric.Line([ 0, 100, 100, 100], {
-	      stroke : settings.defaultColor,
+	      stroke : settings.color,
 	      strokeWidth : 2
 	    });
 	    makeCenterAndRedraw(lineObj);
@@ -899,7 +970,7 @@ var canvas, selectedObj, settings, coords, filename;
 	      fill: 'transparent',
 	      width: 150,
 	      height: 100,
-	      stroke : settings.defaultColor,
+	      stroke : settings.color,
 	      strokeWidth : 2
 	    })
 	    makeCenterAndRedraw(rectObj);
@@ -909,7 +980,7 @@ var canvas, selectedObj, settings, coords, filename;
 		var cirObj = new fabric.Circle({
 			fill: 'transparent',
 			radius: 50,
-			stroke : settings.defaultColor,
+			stroke : settings.color,
 			strokeWidth : 2
 		})
 		makeCenterAndRedraw(cirObj);
