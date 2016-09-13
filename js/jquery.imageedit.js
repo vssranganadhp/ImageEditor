@@ -92,6 +92,7 @@ var canvas, selectedObj, settings, coords, filename;
 		$("#IEcontrols div").bind("click",function(){
 			if($(this).hasClass("active"))
 				return false;
+			closeMeasure();
 			var control_type = $(this).attr('data-control-type');
 			$(".canvas-container").show();
 			$("#IEcrop_image_ops, #IEmeasure_image_ops").hide();
