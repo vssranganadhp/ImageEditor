@@ -47,11 +47,19 @@ Programmatic access:
 
 ## Properties
 
-* **minScale** :  Minimum value for scale ranges from 0.1 to 1
-* **maxScale** :  Maximum value for scale ranges from 0.1 to 10
+* **minScale** :  Minimum value for scale ranges from 0.1 to 1, *default : 0.3*
+* **maxScale** :  Maximum value for scale ranges from 0.1 to 10, '*default : 1*'
 * **color** : Color for text, shapes, *default : red*
 * **font** :  Font family for text, *default : Helvetica*
-* **text** :  Default text : Enter text here
+* **fontSize** : Font size, numeric value, *default : 20*
+* **text** :  *default : Enter text here*
+* **overlays** : An array of image URLs
+<br />Example :
+```js
+  $("img").imageEdit({
+    overlays : ['images/clip/house.png', 'images/clip/landscape.png']
+  })
+```
 
 ## Programmatic options:
 
