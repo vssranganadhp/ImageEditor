@@ -14,14 +14,14 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 			$("img").imageEdit({
-				minScale:4,
-				maxScale:8,
+				maxScale:3,
 				onReady:function(){
 					console.log("image loaded");
 				},
 				onSave : function(src){
 					console.log(src.length);
-				}
+				},
+				overlays : ['images/clips/house.png','images/clips/home.png','images/clips/cape_house.png','images/clips/landscape.png']
 			});
 		})
 	</script>

@@ -1,11 +1,13 @@
+var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 (function($, _window){
-	var canvas, selectedObj, settings, coords, filename;
 	settings = {
 		contWidth : 0,
 		contHeight : 0,
 		minScale : 0.3,
 		maxScale : 1,
 		color : 'red',
+		overlays : [],
+		fontSize : 20,
 		font : 'Helvetica',
 		text : 'Enter text here'
 	};
@@ -66,8 +68,8 @@
 			'src' : 'string'
 		}
 	};
-	var controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand', 'save': 'fa-download'};
-	var shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
+	controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand', 'save': 'fa-download'};
+	shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
 	// var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
 		selector = this;
@@ -78,6 +80,10 @@
 		if(typeof options != 'object'){
 			method = options;
 			options = {};
+		}
+		if(options.overlays.length > 0){
+			shape_controls['overlays'] = 'fa-file-image-o';
+			setOverlaysImgs(options,0);
 		}
 		this.each(function(index, element){
 			destructor.apply(element, [index, element, options]);
@@ -101,6 +107,9 @@
 				$div.append($('<span />').text(i.toUpperCase()));
 			}
 			$div.appendTo($("#IEshape_controls"));
+		}
+		if(shape_controls['overlays']){
+			$("#IEshape_controls .IEcontrol_icons").css("width","16.66%");
 		}
 		$("#IEcontrols div").bind("click",function(){
 			if($(this).hasClass("active"))
@@ -205,7 +214,13 @@
 				case 'circle':
 					addCircle();
 					break;
+				case 'overlays':
+					$(this).addClass("active");
+					showOverlays();
+					return false;
+					break;
 			}
+			$(".IEcontrol_icons").removeClass("active");
 			$("#IEshape_controls").removeClass("active");
 		})
 		$("<canvas />",{"id":"IEcanvas"}).appendTo($("#IEcontainer"));
@@ -217,6 +232,21 @@
 		$("#IEsettings").append($("<div id='IEclose_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
 		$("<div />",{"id":"IEmeasure_popup"}).appendTo($("#IEcontainer"));
 		$("#IEcontainer").append($("<div />",{"id":"IEloader"}));
+		$("#IEcontainer").bind("dragover",function(e){
+			eventHandler(e);
+		});
+		$("#IEcontainer").bind("drop",function(e){
+			var files = e.originalEvent.dataTransfer.files;
+			var fr = new FileReader();
+			fr.onloadend = function(ev){
+				var src = ev.target.result;
+				fabric.Image.fromURL(src,function(nimg){
+					makeCenterAndRedraw(nimg);
+	            });
+			}
+			fr.readAsDataURL(files[0]);
+			eventHandler(e);
+		})
 		// $("#IEloader").append($('<i />'));
 		// $("#IEloader").html('<div class="blockG" id="rotateG_01"></div><div class="blockG" id="rotateG_02"></div><div class="blockG" id="rotateG_03"></div><div class="blockG" id="rotateG_04"></div><div class="blockG" id="rotateG_05"></div><div class="blockG" id="rotateG_06"></div><div class="blockG" id="rotateG_07"></div><div class="blockG" id="rotateG_08"></div>');
 		var measure_props = ["Real Distance","Ratio", "Calculated Area", "Calculated Distance"];
@@ -388,7 +418,9 @@
 						selectedObj = canvas.getActiveObject();
 						if(selectedObj){
 							$("#IEproperties_dialogs").show();
-							// selectedObj.bringToFront();
+							if(!selectedObj.isMain){
+								selectedObj.bringToFront();
+							}
 							showProperties();
 							setProperties();
 						} else {
@@ -425,6 +457,7 @@
 			                canvas.centerObject(nimg);
 						    nimg.setCoords();
 						    canvas.renderAll();
+						    nimg.isMain = true;
 						    hideLoading();
 						    if(settings.onReady == 'function')
 							    settings.onReady();
@@ -490,8 +523,7 @@
 			settings.curScale = 1;
 		}
         $("#IEscale").data("isChangedProg",true);
-        if(settings.minScale > 1){
-        	console.error("minScale property should be less than or equal to 1.");
+        if(settings.minScale > settings.curScale){
         	settings.minScale = settings.curScale.toFixed(2);
         }
         $("#IEscale").attr("min",settings.minScale);
@@ -652,7 +684,7 @@
 	    var textSample = new fabric.IText(text, {
 			fontFamily: settings.font,
 			angle: 0,
-			fontSize: 20,
+			fontSize: settings.fontSize,
 			fill: settings.color,
 			hasRotatingPoint: true,
 			centerTransform: true,
@@ -729,6 +761,41 @@
 		$(".prop_body .default").show();
 	}
 
+	var setOverlaysImgs = function(opts, idx){
+		if(idx == 0){
+			settings.overlayImgs = [];
+		}
+		if(opts.overlays[idx]){
+			var img = new Image();
+			img.onload = function(){
+				settings.overlayImgs.push(img);
+				idx++;
+				setOverlaysImgs(opts, idx);
+			}
+			img.src = opts.overlays[idx];
+		} else {
+			$('<div />',{'id':'IEoverlays'}).appendTo($('.overlays'));
+			$('<div />',{'class':'IEtriangle'}).appendTo($('#IEoverlays'));
+			$('<div />',{'id':'IEoverlay_box'}).appendTo($('#IEoverlays'));
+			settings.overlayImgs.forEach(function(img){
+				$(img).appendTo($('#IEoverlay_box'));
+			});
+			$('#IEoverlay_box img').bind("click",function(){
+				var src = $(this).attr('src');
+				fabric.Image.fromURL(src,function(nimg){
+					makeCenterAndRedraw(nimg);
+	            });
+			})
+		}
+	}
+
+	function showOverlays(){
+		$("#IEcontainer").one('click',function(){
+			$(".IEcontrol_icons.overlays").removeClass("active");
+			$("#IEshape_controls").removeClass("active");
+		})
+	}
+
 	function setProperties(){
 		$(".searchable input, .searchable select").each(function(){
 			var title = $(this).attr('title');
@@ -740,7 +807,6 @@
 					$(this).removeAttr("checked");
 				}
 			}
-			// console.log(title);
 			if(selectedVal !== "" && selectedVal != null && selectedVal != undefined){
 				if(this.type == 'color'){
 					if(selectedVal.indexOf('rgb') == -1){
@@ -771,9 +837,12 @@
 	    }
 	}
 
-	function initCrop(){
+	function initCrop(recurred_again){
 		setPositionsOfInnerElements();
 		var target_el = $(".jcrop-holder > div:eq(0) > div:eq(0)");
+		if(target_el.length == 0 && !recurred_again){
+			initCrop(true);
+		}
 		var tick_icon = $('<span />',{'class':'crop_icon tick'});
 		var close_icon = $('<span />',{'class':'crop_icon close'});
 		tick_icon.insertAfter(target_el);
