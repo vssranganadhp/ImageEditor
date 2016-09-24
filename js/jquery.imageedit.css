@@ -4,12 +4,12 @@
 #IEcontainer.active{display: block;}
 #IEcontrols{position:absolute;top:0px;left:30%;width:40%;height:65px;box-shadow: 0px 0px 3px;z-index:100000;}
 #IEshape_controls{position:absolute;top:-65px;left:15%;width:70%;height:65px;box-shadow: 0px 0px 3px;z-index:100001;/*transition: all .3s ease-out;*/}
-.canvas-container, #IEcrop_image_ops, #IEmeasure_image_ops{position: absolute !important;align-self: center;/*transition: all .3s ease-out;*/}
+.canvas-container, #IEcrop_image_ops, #IEdraw_cont, #IEmeasure_image_ops{position: absolute !important;align-self: center;/*transition: all .3s ease-out;*/}
 #IEmeasure_image{display:none;}
 #IEshape_controls .IEcontrol_icons {width: 20%;}
 .IEcontrol_icons.active{background:black;color:white;}
 #IEshape_controls.active{top:0px;}
-.IEcontrol_icons {width: 20%;float: left;background: #fff;padding: 10px;text-align: center;box-sizing: border-box;font-size: 16px;font-family:Arial,Helvetica,sans-serif;cursor:pointer;-webkit-user-select:none;height:65px;}
+.IEcontrol_icons {width: 16.66%;float: left;background: #fff;padding: 10px;text-align: center;box-sizing: border-box;font-size: 16px;font-family:Arial,Helvetica,sans-serif;cursor:pointer;-webkit-user-select:none;height:65px;}
 .IEcontrol_icons i {font-size: 27px;}
 .IEcontrol_icons span {display: block;text-overflow:ellipsis;overflow:hidden;}
 .IEcontrol_icons:hover{background:grey;color:white;}

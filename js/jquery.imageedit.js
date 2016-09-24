@@ -1,4 +1,4 @@
-var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
+var canvas, selectedObj, settings, coords, filename, controls, shape_controls, drawPoints, selectedPoint;
 (function($, _window){
 	settings = {
 		contWidth : 0,
@@ -9,7 +9,9 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 		overlays : [],
 		fontSize : 20,
 		font : 'Helvetica',
-		text : 'Enter text here'
+		text : 'Enter text here',
+		controlsColor : 'blue',
+		borderColor : 'blue'
 	};
 	coords = {};
 	var measured_scale = 1;
@@ -68,7 +70,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 			'src' : 'string'
 		}
 	};
-	controls = {'text':'fa-pencil-square-o', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand', 'save': 'fa-download'};
+	controls = {'text':'fa-pencil-square-o', 'draw':'fa-pencil', 'shape':'fa-square-o', 'crop':'fa-crop', 'measure':'fa-expand', 'save': 'fa-download'};
 	shape_controls = {'arrow':'fa-long-arrow-right', 'double sided arrow':'fa-arrows-h', 'line':'fa-minus', 'rectangle':'fa-square-o', 'circle':'fa-circle-thin'};
 	// var canvas, selectedObj;
 	$.fn.imageEdit = function(options){
@@ -126,6 +128,21 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 			switch(control_type){
 				case 'text':
 					addText();
+					break;
+				case 'draw':
+					$(".canvas-container").hide();
+					$("#IEdraw_cont").css({width:canvas.width,height:canvas.height});
+					$("#IEdraw_cont").show();
+					var can = $("#IEdraw_canvas")[0];
+					can.width = canvas.width;
+					can.height = canvas.height;
+					var cxt = can.getContext("2d");
+					var img = new Image();
+					img.onload = function(){
+						cxt.drawImage(img,0,0);
+						initDraw(cxt, img);
+					}
+					img.src = canvas.toDataURL();
 					break;
 				case 'shape':
 					$("#IEshape_controls").addClass("active");
@@ -224,6 +241,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 			$("#IEshape_controls").removeClass("active");
 		})
 		$("<canvas />",{"id":"IEcanvas"}).appendTo($("#IEcontainer"));
+		$('<div id="IEdraw_cont"><canvas id="IEdraw_canvas"></canvas></div>').appendTo($("#IEcontainer"));
 		$('<div id="IEcrop_image_ops"><img id="IEimage_el" /></div>').appendTo($("#IEcontainer"));
 		$('<div id="IEmeasure_image_ops"><textarea id="IEmeasure_image"></textarea></div>').appendTo($("#IEcontainer"));
 		$('<div id="IEcoords_div"><div><textarea id="IEpoints"></textarea><i></i></div></div>').appendTo($("#IEcontainer"));
@@ -318,7 +336,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 				} else {
 					$(".canvas-container, #IEmeasure_image_ops").removeClass("IEmove_cursor");
 				}
-				$(".canvas-container, #IEmeasure_image_ops").css("transform","translate3d("+st_left+"px,"+st_top+"px,0px) scale("+scale+")");
+				$(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").css("transform","translate3d("+st_left+"px,"+st_top+"px,0px) scale("+scale+")");
 			}
 		});
 		$("body").bind("keydown",function(e){
@@ -404,7 +422,12 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 					canvasWidth = imgWidth;
 					canvasHeight = imgHeight;
 					$("#IEcanvas").attr({Width:canvasWidth,Height:canvasHeight});
-					canvas = new fabric.Canvas('IEcanvas');
+					fabric.Object.prototype.cornerColor = settings.controlsColor;
+					fabric.Object.prototype.borderColor = settings.borderColor;
+					fabric.Object.prototype.borderOpacityWhenMoving = 1;
+					canvas = new fabric.Canvas('IEcanvas',{
+						// fillStyle : 'red',
+					});
 					canvas.on("object:scaling",function(obj){
 						var target = obj.target;
 						if(target.type == 'i-text'){
@@ -450,7 +473,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 									settings.curScale = settings.contWidth/settings.imgWidth;
 								}
 								// nimg.scale(currentScale);
-								$(".canvas-container, #IEmeasure_image_ops").css("transform","scale("+settings.curScale+")");
+								$(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").css("transform","scale("+settings.curScale+")");
 								// $(".canvas-container").css("transform","scale(1)");
 							}
 			            	canvas.add(nimg);
@@ -464,7 +487,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 			            });
 			            resetScaleLimit();
 					});
-		            $(".canvas-container, #IEmeasure_image_ops").bind("mousewheel",function(e){
+		            $(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").bind("mousewheel",function(e){
 						var delta = e.originalEvent.wheelDelta/120;
 						var curScale = parseFloat($("#IEscale").val());
 						if(delta > 0){
@@ -508,8 +531,8 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 	var setPositionsOfInnerElements = function(){
 		var containerWidth = $(".canvas-container").width()/2;
 		var containerHeight = $(".canvas-container").height()/2;
-        $(".canvas-container, #IEmeasure_image_ops").css("left","calc(50% - "+containerWidth+"px)");
-        $(".canvas-container, #IEmeasure_image_ops").css("top","calc(50% - "+containerHeight+"px)");
+        $(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").css("left","calc(50% - "+containerWidth+"px)");
+        $(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").css("top","calc(50% - "+containerHeight+"px)");
 	}
 	var resetScaleLimit = function(){
 		settings.contWidth = innerWidth*0.8;
@@ -522,6 +545,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 		if(settings.curScale > 1){
 			settings.curScale = 1;
 		}
+		fabric.Object.prototype.borderScaleFactor = settings.curScale;
         $("#IEscale").data("isChangedProg",true);
         if(settings.minScale > settings.curScale){
         	settings.minScale = settings.curScale.toFixed(2);
@@ -529,10 +553,10 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
         $("#IEscale").attr("min",settings.minScale);
         $("#IEscale").attr("max",settings.maxScale);
         $("#IEscale").val(settings.curScale);
-        $(".canvas-container, #IEmeasure_image_ops").css("transform","scale("+settings.curScale+")");
+        $(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").css("transform","scale("+settings.curScale+")");
         $("#IEscale").data("isChangedProg","");
-        $(".canvas-container, #IEmeasure_image_ops").unbind("mousedown");
-        $(".canvas-container, #IEmeasure_image_ops").bind("mousedown",function(event){
+        $(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").unbind("mousedown");
+        $(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").bind("mousedown",function(event){
 			var clientX = event.pageX;
 			var clientY = event.pageY;
 			var transform = $(".canvas-container")[0].style.transform;
@@ -553,7 +577,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 				if(e.shiftKey){
 					var left = e.pageX-clientX+st_left;
 					var top = e.pageY-clientY+st_top;
-					$(".canvas-container, #IEmeasure_image_ops").css("transform",'translate3d('+left+'px,'+top+'px,0px) '+scale+'');
+					$(".canvas-container, #IEmeasure_image_ops, #IEdraw_cont").css("transform",'translate3d('+left+'px,'+top+'px,0px) '+scale+'');
 				}
 			});
 			$("#IEcontainer").bind("mouseup",function(){
@@ -837,6 +861,74 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 	    }
 	}
 
+	var initDraw = function(cxt, img){
+		drawPoints = [];
+		$("#IEdraw_cont").bind("mousedown",function(e){
+			var x = e.offsetX;
+			var y = e.offsetY;
+			if(e.shiftKey){
+				return false;
+			}
+			selectedPoint = nearestPoint(x,y);
+			if(selectedPoint){
+				$("#IEdraw_cont").bind("mousemove",function(ev){
+					var x1 = ev.offsetX;
+					var y1 = ev.offsetY;
+					var idx = drawPoints.indexOf(selectedPoint);
+					selectedPoint = [x1,y1];
+					drawPoints.splice(idx,1,selectedPoint);
+					showPointsOnDraw(cxt, img);
+				});
+				$("#IEdraw_cont").bind("mouseup",function(){
+					$("#IEdraw_cont").unbind("mousemove mouseup");
+				})
+			} else {
+				drawPoints.push([x,y]);
+				showPointsOnDraw(cxt, img);
+			}
+			eventHandler(e);
+		});
+	}
+
+	var showPointsOnDraw = function(cxt, img){
+		cxt.clearRect(0,0,cxt.canvas.width,cxt.canvas.height);
+		cxt.drawImage(img,0,0);
+		cxt.fillStyle = "white";
+		cxt.strokeStyle = "red";
+		cxt.strokeWidth = 2/settings.curScale;
+		cxt.beginPath();
+		// cxt.moveTo(drawPoints[0][0],drawPoints[0][1]);
+		drawPoints.forEach(function(p){
+			cxt.rect(p[0]-5,p[1]-5,10,10);
+		})
+		// cxt.closePath();
+		// cxt.beginPath();
+		drawPoints.forEach(function(p){
+			cxt.moveTo(p[0],p[1]);
+			cxt.lineTo(p[0],p[1]);
+		})
+		cxt.fill();
+		cxt.stroke();
+		cxt.fillStyle = "red";
+		cxt.closePath();
+	}
+
+	var nearestPoint = function(x,y){
+		var distances = {};
+		drawPoints.forEach(function(p){
+			var distance = Math.sqrt((x-p[0])**2 + (y-p[1])**2);
+			distances[distance] = p;
+		});
+		var sortedKeys = Object.keys(distances);
+		sortedKeys = sortedKeys.map(function(k){
+			return parseFloat(k);
+		})
+		sortedKeys.sort(function(a,b){
+			return a-b;
+		});
+		return sortedKeys[0] < 30 ? distances[sortedKeys[0]] : false;
+	}
+
 	function initCrop(recurred_again){
 		setPositionsOfInnerElements();
 		var target_el = $(".jcrop-holder > div:eq(0) > div:eq(0)");
@@ -937,6 +1029,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls;
 		$("#IEmeasure_popup").removeClass("active");
 		$("#IEcoords_div").hide();
 		$("#IEmeasure_image_ops").hide();
+		$("#IEdraw_cont").hide();
 		$(".canvas-container").show();
 		$("#IEmeasure_image_ops > *").not("textarea").remove();
 		$("#IEmeasure_image_ops textarea").removeAttr("data-image-url");
