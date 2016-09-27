@@ -5,13 +5,16 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 		contHeight : 0,
 		minScale : 0.3,
 		maxScale : 1,
+		minDistance : 6,
 		color : 'red',
 		overlays : [],
 		fontSize : 20,
 		font : 'Helvetica',
 		text : 'Enter text here',
 		controlsColor : 'blue',
-		borderColor : 'blue'
+		borderColor : 'blue',
+		drawStrokeColor : 'rgb(255,20,20)',
+		drawFillColor : 'rgba(255,0,0,0.3)'
 	};
 	coords = {};
 	var measured_scale = 1;
@@ -141,6 +144,9 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					img.onload = function(){
 						cxt.drawImage(img,0,0);
 						initDraw(cxt, img);
+						showDialog('Press <code>escape</code> to close draw!', function(){
+							setPoints();
+						});
 					}
 					img.src = canvas.toDataURL();
 					break;
@@ -207,7 +213,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					}
 					break;
 			}
-			if(control_type == 'crop' || control_type == 'measure'){
+			if(control_type == 'crop' || control_type == 'measure' || control_type == 'draw'){
 				$(this).addClass("active");
 			} else {
 				$('#IEcontrols div').removeClass("active");
@@ -249,6 +255,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 		$("#IEsettings").append($("<input type='range' id='IEscale' class='range-slider__range' min='0.1' step='0.01' />"))
 		$("#IEsettings").append($("<div id='IEclose_icon'><i class='fa fa-times' aria-hidden='true'></i></div>"))
 		$("<div />",{"id":"IEmeasure_popup"}).appendTo($("#IEcontainer"));
+		$('<div />',{"id":"IEmessage"}).appendTo($("#IEcontainer"));
 		$("#IEcontainer").append($("<div />",{"id":"IEloader"}));
 		$("#IEcontainer").bind("dragover",function(e){
 			eventHandler(e);
@@ -870,54 +877,53 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 				return false;
 			}
 			selectedPoint = nearestPoint(x,y);
-			if(selectedPoint){
-				$("#IEdraw_cont").bind("mousemove",function(ev){
-					var x1 = ev.offsetX;
-					var y1 = ev.offsetY;
-					var idx = drawPoints.indexOf(selectedPoint);
-					selectedPoint = [x1,y1];
-					drawPoints.splice(idx,1,selectedPoint);
-					showPointsOnDraw(cxt, img);
-				});
-				$("#IEdraw_cont").bind("mouseup",function(){
-					$("#IEdraw_cont").unbind("mousemove mouseup");
-				})
-			} else {
+			if(!selectedPoint){
 				drawPoints.push([x,y]);
 				showPointsOnDraw(cxt, img);
 			}
+			$("#IEdraw_cont").bind("mousemove",function(ev){
+				var x1 = ev.offsetX;
+				var y1 = ev.offsetY;
+				var idx = drawPoints.indexOf(selectedPoint);
+				selectedPoint = [x1,y1];
+				drawPoints.splice(idx,1,selectedPoint);
+				showPointsOnDraw(cxt, img);
+			});
+			$("#IEdraw_cont").bind("mouseup",function(){
+				$("#IEdraw_cont").unbind("mousemove mouseup");
+			})
 			eventHandler(e);
 		});
 	}
 
 	var showPointsOnDraw = function(cxt, img){
 		cxt.clearRect(0,0,cxt.canvas.width,cxt.canvas.height);
-		cxt.drawImage(img,0,0);
-		cxt.fillStyle = "white";
-		cxt.strokeStyle = "red";
-		cxt.strokeWidth = 2/settings.curScale;
+		cxt.globalCompositeOperation = 'destination-over';
+		cxt.fillStyle = 'white';
+		cxt.strokeStyle = settings.drawStrokeColor;
+		cxt.lineWidth = 1;
 		cxt.beginPath();
-		// cxt.moveTo(drawPoints[0][0],drawPoints[0][1]);
-		drawPoints.forEach(function(p){
-			cxt.rect(p[0]-5,p[1]-5,10,10);
-		})
-		// cxt.closePath();
-		// cxt.beginPath();
-		drawPoints.forEach(function(p){
-			cxt.moveTo(p[0],p[1]);
-			cxt.lineTo(p[0],p[1]);
-		})
+		cxt.moveTo(drawPoints[0][0], drawPoints[0][1]);
+		for (var i = 0; i < drawPoints.length; i+=1) {
+			cxt.fillRect(drawPoints[i][0]-3, drawPoints[i][1]-3, 6, 6);
+			cxt.strokeRect(drawPoints[i][0]-3, drawPoints[i][1]-3, 6, 6);
+			if (drawPoints.length >= 2 && i >= 1) {
+				cxt.lineTo(drawPoints[i][0], drawPoints[i][1]);
+			}
+		}
+		cxt.closePath();
+		cxt.fillStyle = settings.drawFillColor;
 		cxt.fill();
 		cxt.stroke();
-		cxt.fillStyle = "red";
-		cxt.closePath();
+		cxt.globalCompositeOperation = 'destination-over';
+		cxt.drawImage(img,0,0);
 	}
 
 	var nearestPoint = function(x,y){
 		var distances = {};
 		drawPoints.forEach(function(p){
-			var distance = Math.sqrt((x-p[0])**2 + (y-p[1])**2);
-			distances[distance] = p;
+			var dist = Math.sqrt((x-p[0])**2 + (y-p[1])**2);
+			distances[dist] = p;
 		});
 		var sortedKeys = Object.keys(distances);
 		sortedKeys = sortedKeys.map(function(k){
@@ -926,7 +932,65 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 		sortedKeys.sort(function(a,b){
 			return a-b;
 		});
-		return sortedKeys[0] < 30 ? distances[sortedKeys[0]] : false;
+		var idxOfDrawPoints = false;
+		if(sortedKeys[0] < settings.minDistance){
+			// if(sortedKeys.length > 2){
+			// 	var a = distances[sortedKeys[0]];
+			// 	var b = distances[sortedKeys[1]];
+			// 	var c = [x,y];
+			// 	if(calcPerpendicularDistance(a,b,c) < settings.minDistance){
+			// 		idxOfDrawPoints = Math.min(drawPoints.indexOf(distances[sortedKeys[0]]),drawPoints.indexOf(distances[sortedKeys[1]]));
+			// 	}
+			// }
+			// if(idxOfDrawPoints == false)
+				return distances[sortedKeys[0]];
+		}
+		return idxOfDrawPoints;
+	}
+
+	var calcPerpendicularDistance = function(a, b, c){
+		return 2*areaOfTriangle(a,b,c) / distance(a[0], a[1], b[0], b[1]);
+		// return ((b[0]-a[0])*(a[1]-b[1]) - (a[0]-c[0])*(b[1]-a[1]))/(Math.sqrt((b[0]-a[0])**2 + (b[1]-a[1])**2));
+	}
+
+	var areaOfTriangle = function(a, b, c){
+		return Math.abs(a[0]*(b[1]-c[1]) + b[0]*(c[1]-a[1]) + c[0]*(a[1]-b[1]))/2;
+	}
+
+	var setPoints = function(){
+		if(drawPoints.length > 2){
+			// x_min = Math.min.apply([],drawPoints.map(function(p){
+			// 	return p[0]
+			// }))
+
+			// y_min = Math.min.apply([],drawPoints.map(function(p){
+			// 	return p[1]
+			// }))
+
+			// drawPoints = drawPoints.map(function(p){
+			// 	return [p[0]-x_min,p[1]-y_min];
+			// })
+			var x_max = Math.max.apply([],drawPoints.map(function(p){return p[0];}));
+			var y_max = Math.max.apply([],drawPoints.map(function(p){return p[1];}));
+			var svg_str = '<svg width="'+x_max+'" height="'+y_max+'"><polygon points="'+drawPoints.join(' ')+'" style="fill:'+settings.drawFillColor+';stroke:'+settings.drawStrokeColor+';stroke-width:1" /></svg>';
+			fabric.loadSVGFromString(svg_str,function(objects, options){
+				var loadedObject = fabric.util.groupSVGElements(objects, options);
+				canvas.add(loadedObject);
+				loadedObject.setCoords();
+			    canvas.setActiveObject(loadedObject);
+			    canvas.renderAll();
+				$(".canvas-container").show();
+				$("#IEdraw_cont").hide();
+				$(".IEcontrol_icons").removeClass('active');
+			})
+		} else if(drawPoints.length == 0){
+			$(".canvas-container").show();
+			$("#IEdraw_cont").hide();
+			$(".IEcontrol_icons").removeClass('active');
+		} else {
+			alert("Please set atleast 3 points to create an overlay!");
+			return false;
+		}
 	}
 
 	function initCrop(recurred_again){
@@ -1197,6 +1261,19 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 	}
 	var hideLoading = function(){
 		$("#IEloader").removeClass("active");
+	}
+	var showDialog = function(msg, callback){
+		$("#IEmessage").html(msg).removeClass().addClass('bounceIn animated').one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
+			setTimeout(function(){
+				$("#IEmessage").removeClass().html('');
+			},1000);
+		});
+		$("body").unbind("keyup");
+		$("body").bind("keyup",function(e){
+			if(e.keyCode == 27 && typeof(callback) == 'function'){
+				callback();
+			}
+		})
 	}
 	$(_window).on("resize",resetSize);
 })(jQuery, window);
