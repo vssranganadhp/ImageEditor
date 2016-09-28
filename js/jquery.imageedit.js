@@ -86,7 +86,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 			method = options;
 			options = {};
 		}
-		if(options.overlays.length > 0){
+		if(options.overlays && options.overlays.length > 0){
 			shape_controls['overlays'] = 'fa-file-image-o';
 			setOverlaysImgs(options,0);
 		}
@@ -136,6 +136,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					$(".canvas-container").hide();
 					$("#IEdraw_cont").css({width:canvas.width,height:canvas.height});
 					$("#IEdraw_cont").show();
+					canvas.discardActiveObject();
 					var can = $("#IEdraw_canvas")[0];
 					can.width = canvas.width;
 					can.height = canvas.height;
@@ -144,7 +145,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					img.onload = function(){
 						cxt.drawImage(img,0,0);
 						initDraw(cxt, img);
-						showDialog('Press <code>escape</code> to close draw!', function(){
+						showDialog('Press <kbd>escape</kbd> to close draw!', function(){
 							setPoints();
 						});
 					}
@@ -922,7 +923,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 	var nearestPoint = function(x,y){
 		var distances = {};
 		drawPoints.forEach(function(p){
-			var dist = Math.sqrt((x-p[0])**2 + (y-p[1])**2);
+			var dist = Math.sqrt(Math.pow((x-p[0]),2) + Math.pow((y-p[1]),2));
 			distances[dist] = p;
 		});
 		var sortedKeys = Object.keys(distances);
@@ -959,25 +960,21 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 
 	var setPoints = function(){
 		if(drawPoints.length > 2){
-			// x_min = Math.min.apply([],drawPoints.map(function(p){
-			// 	return p[0]
-			// }))
-
-			// y_min = Math.min.apply([],drawPoints.map(function(p){
-			// 	return p[1]
-			// }))
-
-			// drawPoints = drawPoints.map(function(p){
-			// 	return [p[0]-x_min,p[1]-y_min];
-			// })
+			var x_min = Math.min.apply([],drawPoints.map(function(p){return p[0];}));
+			var y_min = Math.min.apply([],drawPoints.map(function(p){return p[1];}));
+			drawPoints = drawPoints.map(function(p){return [p[0]-x_min,p[1]-y_min];});
 			var x_max = Math.max.apply([],drawPoints.map(function(p){return p[0];}));
 			var y_max = Math.max.apply([],drawPoints.map(function(p){return p[1];}));
 			var svg_str = '<svg width="'+x_max+'" height="'+y_max+'"><polygon points="'+drawPoints.join(' ')+'" style="fill:'+settings.drawFillColor+';stroke:'+settings.drawStrokeColor+';stroke-width:1" /></svg>';
 			fabric.loadSVGFromString(svg_str,function(objects, options){
 				var loadedObject = fabric.util.groupSVGElements(objects, options);
+				loadedObject.left = x_min;
+				loadedObject.top = y_min;
+				loadedObject.selectable = false;
+				loadedObject.hasControls = false;
+				loadedObject.hasBorders = false;
 				canvas.add(loadedObject);
 				loadedObject.setCoords();
-			    canvas.setActiveObject(loadedObject);
 			    canvas.renderAll();
 				$(".canvas-container").show();
 				$("#IEdraw_cont").hide();
@@ -1263,15 +1260,18 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 		$("#IEloader").removeClass("active");
 	}
 	var showDialog = function(msg, callback){
-		$("#IEmessage").html(msg).removeClass().addClass('bounceIn animated').one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
+		$("#IEmessage").html(msg).removeClass().addClass('bounceIn animated');
+		setTimeout(function(){
+			$("#IEmessage").removeClass().addClass('bounceOut animated');
 			setTimeout(function(){
 				$("#IEmessage").removeClass().html('');
 			},1000);
-		});
+		},3000);
 		$("body").unbind("keyup");
 		$("body").bind("keyup",function(e){
-			if(e.keyCode == 27 && typeof(callback) == 'function'){
+			if(e.keyCode == 27 && typeof(callback) == 'function'){		// on pressing escape key
 				callback();
+				callback = '';
 			}
 		})
 	}
