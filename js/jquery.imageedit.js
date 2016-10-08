@@ -136,9 +136,10 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					$(".canvas-container").hide();
 					var widt = canvas.width*settings.curScale;
 					var heig = canvas.height*settings.curScale;
-					var le = widt/2;
-					var to = heig/2;
+					var le = canvas.width/2;
+					var to = canvas.height/2;
 					// $("#IEdraw_cont").css({width:widt,height:heig});
+					$("#IEdraw_cont").css({'left':'calc(50% - '+le+'px)','top':'calc(50% - '+to+'px)'});
 					$("#IEdraw_cont").css({width:canvas.width,height:canvas.height});
 					$("#IEdraw_cont").show();
 					canvas.discardActiveObject();
@@ -148,7 +149,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					var cxt = can.getContext("2d");
 					var img = new Image();
 					img.onload = function(){
-						cxt.drawImage(img,0,0,canvas.width, canvas.height);
+						cxt.drawImage(img,0,0,canvas.width,canvas.height);
 						initDraw(cxt, img);
 						showDialog('Press <kbd>escape</kbd> to close draw!', function(){
 							setPoints();
