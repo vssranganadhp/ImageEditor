@@ -134,6 +134,11 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 					break;
 				case 'draw':
 					$(".canvas-container").hide();
+					var widt = canvas.width*settings.curScale;
+					var heig = canvas.height*settings.curScale;
+					var le = widt/2;
+					var to = heig/2;
+					$("#IEdraw_cont").css({width:widt,height:heig});
 					$("#IEdraw_cont").css({width:canvas.width,height:canvas.height});
 					$("#IEdraw_cont").show();
 					canvas.discardActiveObject();
