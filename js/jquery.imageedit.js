@@ -923,7 +923,7 @@ var canvas, selectedObj, settings, coords, filename, controls, shape_controls, d
 		cxt.fill();
 		cxt.stroke();
 		cxt.globalCompositeOperation = 'destination-over';
-		cxt.drawImage(img,0,0,cxt.canvas.width,cxt.canvas.height);
+		cxt.drawImage(img,0,0,canvas.width,canvas.height);
 	}
 
 	var nearestPoint = function(x,y){
